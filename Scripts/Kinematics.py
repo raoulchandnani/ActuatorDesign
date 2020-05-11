@@ -22,7 +22,7 @@ from math import atan, sin, cos, tan
 from Post_P_Script import getResults
 ##########################
 # Variables
-H=550; # Horizontal plate length 
+H=540; # Horizontal plate length 
 V=125; # Vertical plate length
 G=40;   # Gap length
 HNG=30; # Hinge height
