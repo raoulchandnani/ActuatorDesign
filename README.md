@@ -16,7 +16,7 @@ Code to calculate kinemtics of 5-Panel hinged structure using Pyslvs and find de
 *5Panel*
 - Post_P_Script
 - math
-- os
+- os /n
 *optimization_script/5Panel_Kinematics*
 - Pyslvs
 - subprocess
