@@ -1,0 +1,19 @@
+setuptools
+wheel
+requests
+qtpy
+pyqt5<5.14; sys_platform == 'linux'
+pyqt5; sys_platform != 'linux'
+pyqtchart<5.14; sys_platform == 'linux'
+pyqtchart; sys_platform != 'linux'
+ezdxf
+numpy
+cython
+python-solvespace
+openpyxl
+psutil
+lark-parser
+pyyaml
+h5py
+qrcode
+PyWavelets

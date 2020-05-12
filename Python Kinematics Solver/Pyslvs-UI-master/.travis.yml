@@ -1,0 +1,82 @@
+# Travis-CI for Pyslvs-UI
+language: python
+
+git:
+  depth: 1
+
+matrix:
+  include:
+    - &linux
+      os: linux
+      sudo: required
+      python: "3.7"
+      dist: xenial
+      before_install:
+        - python3 -m pip install -r requirements.txt -U
+      install:
+        - make pack
+        - python3 setup.py install
+
+    - <<: *linux
+      python: "3.8"
+      addons:
+        apt:
+          update: true
+          packages:
+            - libhdf5-dev
+      after_success:
+        # PyPI deployment
+        - if [[ "$TRAVIS_REPO_SLUG" == "KmolYuan/Pyslvs-UI" && -n "$TRAVIS_TAG" ]]; then
+          python3 -m pip install twine;
+          python3 setup.py bdist_wheel;
+          python3 -m twine upload dist/*.whl --skip-existing;
+          fi
+      deploy:
+        - &executable-deploy
+          provider: releases
+          overwrite: true
+          api_key: $TRAVIS_TOKEN
+          file_glob: true
+          file: out/*.AppImage
+          skip_cleanup: true
+          on:
+            tags: true
+
+    - &osx
+      os: osx
+      osx_image: xcode10
+      language: generic
+      env: PYTHON=3.7.0
+      before_install:
+        - git submodule update --init --recursive
+        - brew update
+        - brew upgrade pyenv || true
+        - ln -s /usr/local/bin/greadlink /usr/local/bin/readlink
+        - export PATH="/Users/travis/.pyenv/shims:${PATH}"
+        - env PYTHON_CONFIGURE_OPTS="--enable-shared" pyenv install ${PYTHON}
+        - pyenv global ${PYTHON}
+        - python3 -m pip install pip -U
+        - pyenv rehash
+        - python3 --version
+        - python3 -m pip --version
+        - python3 -m pip install -r requirements.txt -U
+      install:
+        - make test-pack
+        - python3 setup.py install
+        - pyenv rehash
+
+    - <<: *osx
+      env: PYTHON=3.8.0
+      deploy:
+        - <<: *executable-deploy
+          file: dist/*.zip
+
+script:
+  - pyslvs test
+
+before_cache:
+  - rm -rf $HOME/.cache/pip/log
+
+cache:
+  directories:
+    - $HOME/.cache/pip
