@@ -1,4 +1,4 @@
-# Actuator Design code
+# Actuator Design
 
 Set of codes to design, analyse and optimize a 5-Panel hinged structure with SMA actuation.
 
@@ -30,7 +30,7 @@ Code to calculate kinemtics of 5-Panel hinged structure using Pyslvs and find de
 
 *optimization_script/5Panel_Kinematics*
 
-- Pyslvs
+- Pyslvs ( setup availabe in 'Pyslvs-UI-master' )
 - subprocess
 - math
 - numpy
