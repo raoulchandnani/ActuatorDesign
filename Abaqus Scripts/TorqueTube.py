@@ -45,10 +45,10 @@ H=Hnet-G;
 
 session.journalOptions.setValues(replayGeometry=COORDINATE, recoverGeometry=COORDINATE)
 # Variables
-ORTT=12.5
-IRTT=6.25
-V=125
-D=15
+ORTT=0.02
+IRTT=0.01
+V=0.125
+D=0.015
 ## Sketch geometry of TT ##
 s = mdb.models['Model-1'].ConstrainedSketch(name='__profile__', sheetSize=30.0)
 g, v, d, c = s.geometry, s.vertices, s.dimensions, s.constraints
@@ -66,6 +66,24 @@ del mdb.models['Model-1'].sketches['__profile__']
 p = mdb.models['Model-1'].parts['Torque_Tube']
 f = p.faces
 p.Mirror(mirrorPlane=f[3], keepOriginal=ON)
+## Sketch geometry of RB ##
+s = mdb.models['Model-1'].ConstrainedSketch(name='__profile__', sheetSize=1.0)
+g, v, d, c = s.geometry, s.vertices, s.dimensions, s.constraints
+s.setPrimaryObject(option=STANDALONE)
+s.rectangle(point1=(-ORTT, -ORTT), point2=(ORTT, ORTT))
+p = mdb.models['Model-1'].Part(name='Rigid_Body', dimensionality=THREE_D, 
+    type=DEFORMABLE_BODY)
+p = mdb.models['Model-1'].parts['Rigid_Body']
+p.BaseShell(sketch=s)
+s.unsetPrimaryObject()
+p = mdb.models['Model-1'].parts['Rigid_Body']
+del mdb.models['Model-1'].sketches['__profile__']
+p = mdb.models['Model-1'].parts['Rigid_Body']
+p.ReferencePoint(point=(0.0, 0.0, 0.0))
+p = mdb.models['Model-1'].parts['Rigid_Body']
+r = p.referencePoints
+refPoints=(r[2], )
+p.Set(referencePoints=refPoints, name='RB_RP')
 
 ## Partition the geometry##
 p = mdb.models['Model-1'].parts['Torque_Tube']
