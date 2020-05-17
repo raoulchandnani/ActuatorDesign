@@ -202,7 +202,7 @@ p.generateMesh()
 ## Reference points##
 a = mdb.models['Model-1'].rootAssembly
 a.DatumCsysByDefault(CARTESIAN)
-p = mdb.models['Model-1'].parts['Torque_Tube']
+#a = mdb.models['Model-1'].parts['Torque_Tube']
 a.Instance(name='Torque_Tube-1', part=p, dependent=ON)
 a = mdb.models['Model-1'].rootAssembly
 e11 = a.instances['Torque_Tube-1'].edges
@@ -262,6 +262,7 @@ region = a.instances['Torque_Tube-1'].sets['TT']
 mdb.models['Model-1'].TemperatureBC(name='Temp_change', createStepName='Temp-Disp', 
     region=region, fixed=OFF, distributionType=UNIFORM, fieldName='', 
     magnitude=1.0, amplitude='Amp-1')
+
 ## Job##
 mdb.Job(name='Job-1', model='Model-1', description='', type=ANALYSIS, 
     atTime=None, waitMinutes=0, waitHours=0, queue=None, memory=90, 
