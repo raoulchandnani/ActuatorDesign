@@ -43,9 +43,9 @@ IRTT=0.01
 theta=asin((sin(phiR)-sin(phiL))/3)
 Hnet=(Total)/(3*cos(theta)+cos(phiL)+cos(phiR));
 H=Hnet-G;
-T1=340
-T2=340
-T3=340
+T1=380
+T2=380
+T3=380
 ##########################
 
 

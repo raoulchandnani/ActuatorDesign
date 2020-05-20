@@ -9114,3 +9114,20 @@ mdb.jobs['Job-1']._Message(COMPLETED, {'phase': STANDARD_PHASE,
 mdb.jobs['Job-1']._Message(JOB_COMPLETED, {'time': 'Fri May 15 22:01:47 2020', 
     'jobName': 'Job-1'})
 # Save by raoulchandnani on 2020_05_15-22.08.43; build 6.14-2 2014_08_22-09.00.46 134497
+from part import *
+from material import *
+from section import *
+from assembly import *
+from step import *
+from interaction import *
+from load import *
+from mesh import *
+from optimization import *
+from job import *
+from sketch import *
+from visualization import *
+from connectorBehavior import *
+mdb.models['Model-1'].boundaryConditions['Restrict_plates'].suppress()
+mdb.models['Model-1'].boundaryConditions['FixTT-'].resume()
+mdb.models['Model-1'].boundaryConditions['FixTT-'].setValues(localCsys=None)
+# Save by raoulchandnani on 2020_05_20-10.49.00; build 6.14-2 2014_08_22-09.00.46 134497
