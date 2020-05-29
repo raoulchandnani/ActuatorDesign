@@ -1,3 +1,10 @@
+# read the files in the input file
+fileobject = open('input.txt','rb')
+DVs = []
+for line in fileobject:
+	DVs.append(float(line))
+fileobject.close()
+
 from abaqus import *
 from abaqusConstants import *
 import __main__
@@ -40,22 +47,25 @@ Case=1
 # Variables for TT
 ORTT=0.02
 IRTT=0.01
+T1=DVs[0]
+T2=DVs[1]
+T3=DVs[2]
+ORTT=DVs[3]
+IRTT=DVs[4]
 theta=asin((sin(phiR)-sin(phiL))/3)
 Hnet=(Total)/(3*cos(theta)+cos(phiL)+cos(phiR));
 H=Hnet-G;
-T1=0.72
-T2=0.72
-T3=0.05
-test=1
+# T1=0.72
+# T2=0.72
+# T3=0.05
+test=0
 ##########################
 
 
 ### Write data file column headings
 
 session.journalOptions.setValues(replayGeometry=COORDINATE, recoverGeometry=COORDINATE)
-DataFile = open('PostData.txt','w')
-DataFile.write('X1		Y1		X2		Y2		X3		Y3		X4		Y4		X5		Y5		X6		Y6		X7		Y7		X8		Y8		X9		Y9		X10		Y10		MaxVM\n')
-DataFile.close()
+
 
 ###Sketch Geometry and Create Parts
 print 'Sketching/Creating the part'
@@ -1038,11 +1048,7 @@ p.seedEdgeByNumber(edges=pickedEdges, number=4, constraint=FIXED)
 p = mdb.models['Model-1'].parts['Torque_Tube']
 p.generateMesh()
 
-a = mdb.models['Model-1'].rootAssembly
-a.regenerate()
-e6 = a.instances['Elastomer'].elements
-elements6 = e6[:]
-a.Set(elements=elements6, name='ALL_PART')
+
 
 #Assemble TTs
 p = mdb.models['Model-1'].Part(name='Torque_Tube1', 
@@ -1411,6 +1417,17 @@ mdb.models['Model-1'].predefinedFields['Predefined Field-3'].setValuesInStep(
     stepName='RBM', amplitude='Amp-1', magnitudes=(T3, ))	
 #Define Sets
 print 'Defining Sets'
+a = mdb.models['Model-1'].rootAssembly
+a.regenerate()
+e1 = a.instances['Torque_Tube_1'].elements
+elements1 = e1[:]
+e2 = a.instances['Torque_Tube_2'].elements
+elements2 = e2[:]
+e3 = a.instances['Torque_Tube_3'].elements
+elements3 = e3[:]
+e4 = a.instances['Elastomer'].elements
+elements4 = e4[:]
+a.Set(elements=elements1+elements2+elements3+elements4, name='ALL_PART')
 
 a = mdb.models['Model-1'].rootAssembly
 v5 = a.instances['Left_Plate_2'].vertices
@@ -1463,11 +1480,27 @@ job.submit()
 job.waitForCompletion()
 print 'Completed job'
 tipDisp=[0 for x in range(21)]
-if job.status==COMPLETED:
-	tipDisp = getResults(ModelName)
-else:
-	tipDisp=[9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999]
+# if job.status==COMPLETED:
+	# tipDisp = getResults(ModelName)
+# else:
+	# tipDisp=[9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999]
+tipDisp = getResults(ModelName)
+# x=[0 for ind in range(12)]
+# x[0]=-0.5*Total
+# x[1:10]=A[0:19:2]
+# x[11]=0.5*Total
+# z=[0 for ind in range(12)]
+# z[0]=Ez1
+# z[1:10]=A[1:20:2]
+# z[11]=Ez2
+# fileobject = open('temp.txt','wb')
+# for xloc in x:
+	# fileobject.write('%.4f\n' % xloc)
+# for zloc in z:
+	# fileobject.write('%.4f\n' % zloc)
+# fileobject.close()
+	
 DataFile = open('PostData.txt','a')
-DataFile.write('%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f\n' % (tipDisp[2],tipDisp[12],tipDisp[3],tipDisp[13],tipDisp[0],tipDisp[10],tipDisp[1],tipDisp[11],tipDisp[8],tipDisp[18],tipDisp[9],tipDisp[19],tipDisp[6],tipDisp[16],tipDisp[7],tipDisp[17],tipDisp[4],tipDisp[14],tipDisp[5],tipDisp[15],tipDisp[20], ))
+DataFile.write('%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f\n' % (IRTT,ORTT,T1,T2,T3,tipDisp[2],tipDisp[12],tipDisp[3],tipDisp[13],tipDisp[0],tipDisp[10],tipDisp[1],tipDisp[11],tipDisp[8],tipDisp[18],tipDisp[9],tipDisp[19],tipDisp[6],tipDisp[16],tipDisp[7],tipDisp[17],tipDisp[4],tipDisp[14],tipDisp[5],tipDisp[15],tipDisp[20], ))
 DataFile.close()
 print 'DONE!!'

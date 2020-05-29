@@ -8,7 +8,7 @@ DVs=[0 for x in range(6)]
 DataFile = open('PostData.txt','w')
 #DataFile.write('theta_l		theta_r		phiL		phiR		G		HNG		X1		Y1		X2		Y2		X3		Y3		X4		Y4		X5		Y5		X6		Y6		X7		Y7		X8		Y8		X9		Y9		X10		Y10		MaxVM		Error\n')
 DataFile.close()
-Total = 3000;
+Total = 1.0;
 Thetact = [0.05,0.10,0.15,0.20,0.25,0.30,0.35,0.40]
 Thetain = [0.1,0.2,0.3,0.4]
 for actuateleft in range(8):
