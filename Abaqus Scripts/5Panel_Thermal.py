@@ -19,17 +19,17 @@ import xyPlot
 import connectorBehavior
 import displayGroupOdbToolset as dgo
 from math import atan, sin, cos, tan
-from Post_P_Script import getResults
+from Post_P_Script import getResults,getResults2
 ##########################
 #
 # Variables for Plates
 H=0.55; # Horizontal plate length 
 V=0.125; # Vertical plate length
-G=0.030;   # Gap length
-HNG=0.030; # Hinge height
+G=0.039;   # Gap length
+HNG=0.029; # Hinge height
 D=0.015; #Hinge distance from edge
-phiL=0.2; #initial angle
-phiR=0.2;
+phiL=0.19; #initial angle
+phiR=0.21;
 theta_m=0.0;
 theta_l=-0.4;
 theta_l2=0.4;
@@ -38,15 +38,15 @@ Total = 1.000
 seedsize=G/4
 Case=1
 # Variables for TT
-ORTT=0.02
-IRTT=0.01
+ORTT=0.012
+IRTT=0.005
 theta=asin((sin(phiR)-sin(phiL))/3)
 Hnet=(Total)/(3*cos(theta)+cos(phiL)+cos(phiR));
 H=Hnet-G;
-T1=0.72
-T2=0.72
-T3=0.05
-test=1
+T1=0.04
+T2=0.03
+T3=0.08
+test=0
 ##########################
 
 
