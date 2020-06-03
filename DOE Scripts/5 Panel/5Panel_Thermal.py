@@ -1,3 +1,9 @@
+# read the files in the input file
+fileobject = open('input.txt','rb')
+DVs = []
+for line in fileobject:
+	DVs.append(float(line))
+fileobject.close()
 
 from abaqus import *
 from abaqusConstants import *
@@ -38,15 +44,26 @@ elast_thk=0.005
 Total = 1.000
 Case=1
 # Variables for TT
-T1=0.73
-T2=0.25
-T3=0.11
-ORTT=0.030
-IRTT=0.015
-G=0.03
-HNG=0.03
-phiL=0.15
-phiR=0.21
+ORTT=0.02
+IRTT=0.01
+T1=DVs[0]
+T2=DVs[1]
+T3=DVs[2]
+ORTT=DVs[3]
+IRTT=DVs[4]
+G=DVs[5]
+HNG=DVs[6]
+phiL=DVs[7]
+phiR=DVs[8]
+# T1=1.5
+# T2=1.5
+# T3=0.09
+# ORTT=0.02
+# IRTT=0.01
+# G=0.03
+# HNG=0.03
+# phiL=0.3
+# phiR=0.3
 
 theta=asin((sin(phiR)-sin(phiL))/3)
 Hnet=(Total)/(3*cos(theta)+cos(phiL)+cos(phiR));
