@@ -1,4 +1,3 @@
-
 from abaqus import *
 from abaqusConstants import *
 import __main__
@@ -55,7 +54,7 @@ seedsize=G/4
 # T1=0.72
 # T2=0.72
 # T3=0.05
-test=0
+test=1
 ##########################
 
 
@@ -1292,7 +1291,6 @@ a = mdb.models['Model-1'].rootAssembly
 region2=a.instances['Right_Plate_2'].surfaces['Surf-Bottom']
 mdb.models['Model-1'].Tie(name='Tie_R2', master=region2, slave=region1, 
     positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON)
-
 
 #Define Steps
 print 'Defining the Steps'
