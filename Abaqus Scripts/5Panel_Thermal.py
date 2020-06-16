@@ -19,7 +19,7 @@ import xyPlot
 import connectorBehavior
 import displayGroupOdbToolset as dgo
 from math import atan, sin, cos, tan
-from Post_P_Script import getResults,getResults2
+from Post_P_Script import getResults,getResults2,find_strain,find_stress
 ##########################
 #
 # Variables for Plates
@@ -37,15 +37,15 @@ elast_thk=0.005
 Total = 1.000
 Case=1
 # Variables for TT
-T1=0.73
-T2=0.25
-T3=0.11
-ORTT=0.030
-IRTT=0.015
+T1=1.12
+T2=0.78
+T3=0.19
+ORTT=0.020
+IRTT=0.010
 G=0.03
 HNG=0.03
-phiL=0.15
-phiR=0.21
+phiL=0.2
+phiR=0.2
 
 theta=asin((sin(phiR)-sin(phiL))/3)
 Hnet=(Total)/(3*cos(theta)+cos(phiL)+cos(phiR));
@@ -54,7 +54,7 @@ seedsize=G/4
 # T1=0.72
 # T2=0.72
 # T3=0.05
-test=1
+test=0
 ##########################
 
 
@@ -1159,6 +1159,7 @@ else:
 	DVct=mdb.models['Model-1'].rootAssembly.instances['Right_Plate_2'].datums[DP9].pointOn	
 
 a.translate(instanceList=('Torque_Tube_3', ), vector=(DVct[0]-DVct2[0], DVct[1]-DVct2[1], DVct[2]-DVct2[2]))
+
 a = mdb.models['Model-1'].rootAssembly
 region2=a.instances['Right_Plate'].sets['Set-1']
 a = mdb.models['Model-1'].rootAssembly
@@ -1308,7 +1309,7 @@ mdb.models['Model-1'].steps['RBM'].setValues(nlgeom=ON)
     # minInc=1e-08, maxInc=0.1, deltmx=100.0)
 # mdb.models['Model-1'].steps['Temp-Disp'].setValues(nlgeom=ON)
 mdb.models['Model-1'].fieldOutputRequests['F-Output-1'].setValues(variables=(
-    'S', 'E', 'PE', 'LE', 'U', 'RF', 'CF','NT','COORD'))
+    'S', 'E', 'PE', 'LE', 'U', 'RF', 'CF','NT','COORD','THE','EE'))
 
 #Define BCs				
 print 'Defining all BCs'
@@ -1409,6 +1410,26 @@ mdb.models['Model-1'].predefinedFields['Predefined Field-3'].setValues(
     distributionType=FIELD, field='AnalyticalField-3')
 mdb.models['Model-1'].predefinedFields['Predefined Field-3'].setValuesInStep(
     stepName='RBM', amplitude='Amp-1', magnitudes=(T3, ))	
+	
+## Pressure Load
+a = mdb.models['Model-1'].rootAssembly
+s1 = a.instances['Elastomer'].faces
+DVct=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP8].pointOn
+DVct2=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP13].pointOn
+DVct3=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP5].pointOn
+DVct4=mdb.models['Model-1'].rootAssembly.instances['Left_Plate'].datums[DP8].pointOn
+DVct5=mdb.models['Model-1'].rootAssembly.instances['Middle_Plate'].datums[DP13].pointOn
+DVct6=mdb.models['Model-1'].rootAssembly.instances['Right_Plate_2'].datums[DP5].pointOn
+DVct7=mdb.models['Model-1'].rootAssembly.instances['Right_Plate_2'].datums[DP13].pointOn
+DVct8=mdb.models['Model-1'].rootAssembly.instances['Right_Plate_2'].datums[DP8].pointOn
+DVct9=mdb.models['Model-1'].rootAssembly.instances['Right_Plate'].datums[DP5].pointOn
+side1Faces1 = s1.findAt(((0.5*(DVct[0]-0.5*Total),0,DVct[2]-elast_thk), ), ((DVct2[0],0,DVct2[2]-elast_thk), ), ((0.5*(DVct3[0]+DVct4[0]),0,0.5*(DVct3[2]+DVct4[2])-elast_thk), ), 
+((DVct5[0],0,DVct5[2]-elast_thk), ), ((0.5*(DVct8[0]+DVct9[0]),0,0.5*(DVct8[2]+DVct9[2])-elast_thk), ), ((DVct7[0],0,DVct7[2]-elast_thk), ), ((0.5*(DVct6[0]+0.5*Total),0,DVct6[2]-elast_thk), ))
+region = a.Surface(side1Faces=side1Faces1, name='Elastomer_Surf')
+mdb.models['Model-1'].Pressure(name='Aero_Pressure', createStepName='RBM', 
+    region=region, distributionType=UNIFORM, field='', magnitude=13750.0, 
+    amplitude=UNSET)
+	
 #Define Sets
 print 'Defining Sets'
 a = mdb.models['Model-1'].rootAssembly
@@ -1422,6 +1443,11 @@ elements3 = e3[:]
 e4 = a.instances['Elastomer'].elements
 elements4 = e4[:]
 a.Set(elements=elements1+elements2+elements3+elements4, name='ALL_PART')
+
+a.Set(elements=elements1, name='TT1_ELEM')
+a.Set(elements=elements2, name='TT2_ELEM')
+a.Set(elements=elements3, name='TT3_ELEM')
+a.Set(elements=elements4, name='ELAST_ELEM')
 
 a = mdb.models['Model-1'].rootAssembly
 v5 = a.instances['Left_Plate_2'].vertices
@@ -1480,6 +1506,18 @@ tipDisp=[0 for x in range(21)]
 	# tipDisp=[9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999]
 tipDisp = getResults(ModelName)
 [initial,final]=getResults2(ModelName)
+TT1_THE= find_strain(ModelName, 'RBM','THE',SetName = 'TT1_ELEM', object = 'assembly', object_name = None, strain_metric = 'principal')
+TT2_THE= find_strain(ModelName, 'RBM','THE',SetName = 'TT2_ELEM', object = 'assembly', object_name = None, strain_metric = 'principal')
+TT3_THE= find_strain(ModelName, 'RBM','THE',SetName = 'TT3_ELEM', object = 'assembly', object_name = None, strain_metric = 'principal')
+TT1_EE= find_strain(ModelName, 'RBM','EE',SetName = 'TT1_ELEM', object = 'assembly', object_name = None, strain_metric = 'Shear')
+TT2_EE= find_strain(ModelName, 'RBM','EE',SetName = 'TT2_ELEM', object = 'assembly', object_name = None, strain_metric = 'Shear')
+TT3_EE= find_strain(ModelName, 'RBM','EE',SetName = 'TT3_ELEM', object = 'assembly', object_name = None, strain_metric = 'Shear')
+ELAST_EE= find_strain(ModelName, 'RBM','EE',SetName = 'TT3_ELEM', object = 'assembly', object_name = None, strain_metric = 'principal')
+TT1_S=find_stress(ModelName,'TT1_ELEM')
+TT2_S=find_stress(ModelName,'TT2_ELEM')
+TT3_S=find_stress(ModelName,'TT3_ELEM')
+ELAST_S=find_stress(ModelName,'ELAST_ELEM')
+
 A=(final[2],final[12],final[3],final[13],final[0],final[10],final[1],final[11],final[8],final[18],final[9],final[19],final[6],final[16],final[7],final[17],final[4],final[14],final[5],final[15])
 x=[0 for ind in range(12)]
 x[0]=-0.5*Total
@@ -1497,12 +1535,14 @@ for zloc in z:
 fileobject.close()
 	
 DataFile = open('PostData.txt','a')
-DataFile.write('%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f\n' % (IRTT,ORTT,T1,T2,T3,G,HNG,phiL,phiR,tipDisp[2],tipDisp[12],tipDisp[3],tipDisp[13],tipDisp[0],tipDisp[10],tipDisp[1],tipDisp[11],tipDisp[8],tipDisp[18],tipDisp[9],tipDisp[19],tipDisp[6],tipDisp[16],tipDisp[7],tipDisp[17],tipDisp[4],tipDisp[14],tipDisp[5],tipDisp[15],tipDisp[20], ))
+DataFile.write('%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f\n' % (IRTT,ORTT,T1,T2,T3,G,HNG,
+phiL,phiR,tipDisp[2],tipDisp[12],tipDisp[3],tipDisp[13],tipDisp[0],tipDisp[10],tipDisp[1],tipDisp[11],tipDisp[8],tipDisp[18],tipDisp[9],tipDisp[19],tipDisp[6],tipDisp[16],tipDisp[7],tipDisp[17],
+tipDisp[4],tipDisp[14],tipDisp[5],tipDisp[15],tipDisp[20],TT1_THE,TT2_THE,TT3_THE,TT1_EE,TT2_EE,TT3_EE,ELAST_EE,TT1_S,TT2_S,TT3_S,ELAST_S, ))
 DataFile.close()
 DataFile = open('PostDataInitial.txt','a')
-DataFile.write('%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f\n' % (IRTT,ORTT,T1,T2,T3,G,HNG,phiL,phiR,initial[2],initial[12],initial[3],initial[13],initial[0],initial[10],initial[1],initial[11],initial[8],initial[18],initial[9],initial[19],initial[6],initial[16],initial[7],initial[17],initial[4],initial[14],initial[5],initial[15],tipDisp[20], ))
+DataFile.write('%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f\n' % (IRTT,ORTT,T1,T2,T3,G,HNG,phiL,phiR,initial[2],initial[12],initial[3],initial[13],initial[0],initial[10],initial[1],initial[11],initial[8],initial[18],initial[9],initial[19],initial[6],initial[16],initial[7],initial[17],initial[4],initial[14],initial[5],initial[15],tipDisp[20],TT1_THE,TT2_THE,TT3_THE,TT1_EE,TT2_EE,TT3_EE,ELAST_EE,TT1_S,TT2_S,TT3_S,ELAST_S, ))
 DataFile.close()
 DataFile = open('PostDataFinal.txt','a')
-DataFile.write('%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,' % (IRTT,ORTT,T1,T2,T3,G,HNG,phiL,phiR,final[2],final[12],final[3],final[13],final[0],final[10],final[1],final[11],final[8],final[18],final[9],final[19],final[6],final[16],final[7],final[17],final[4],final[14],final[5],final[15],tipDisp[20], ))
+DataFile.write('%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,' % (IRTT,ORTT,T1,T2,T3,G,HNG,phiL,phiR,final[2],final[12],final[3],final[13],final[0],final[10],final[1],final[11],final[8],final[18],final[9],final[19],final[6],final[16],final[7],final[17],final[4],final[14],final[5],final[15],tipDisp[20],TT1_THE,TT2_THE,TT3_THE,TT1_EE,TT2_EE,TT3_EE,ELAST_EE,TT1_S,TT2_S,TT3_S,ELAST_S, ))
 DataFile.close()
 print 'DONE!!'

@@ -24,49 +24,45 @@ from Post_P_Script import getResults
 ##########################
 # Variables
 H=0.550; # Horizontal plate length 
-V=0.08; # Vertical plate length
+V=0.125; # Vertical plate length
 G=0.030;   # Gap length
 HNG=0.030; # Hinge height
 D=0.015; #Hinge distance from edge
 phiL=0.2; #initial angle
 phiR=0.2;
-theta_m=0.0;
-theta_l=-0.4;
-theta_l2=0.4;
-theta_ml=0.0;
-theta_ll=-0.3;
-theta_l2l=0.3;
-theta_mt=0.0;
-theta_lt=-0.3;
-theta_l2t=0.3;
-elast_thk=0.020
+# theta_m=0.0;
+# theta_l=-0.4;
+# theta_l2=0.4;
+# theta_ml=0.0;
+# theta_ll=-0.3;
+# theta_l2l=0.3;
+# theta_mt=0.0;
+# theta_lt=-0.3;
+# theta_l2t=0.3;
+elast_thk=0.005
 Total = 1.000
 seedsize=G/4
-LD=0.1
+LD=0.15
 theta=asin((sin(phiR)-sin(phiL))/3)
 Hnet=(Total)/(3*cos(theta)+cos(phiL)+cos(phiR));
 H=Hnet-G;
 test=1
 Case=1
 # Variables for TT
-T1=0.73
-T2=0.25
-T3=0.11
-T1T=0.73
-T2T=0.25
-T3T=0.11
-T1L=0.73
-T2L=0.25
-T3L=0.11
-T12=0.73
-T22=0.25
-T32=0.11
-ORTT=0.030
-IRTT=0.015
-G=0.03
-HNG=0.03
-phiL=0.15
-phiR=0.21
+T1=0.13
+T2=0.09
+T3=0.19
+T1T=0.13
+T2T=0.09
+T3T=0.19
+T1L=0.13
+T2L=0.09
+T3L=0.19
+T12=0.44
+T22=1.03
+T32=0.19
+ORTT=0.02
+IRTT=0.01
 ##########################
 
 
@@ -1776,25 +1772,25 @@ for rowname in ['','T','L']:
 
 	a = mdb.models['Model-1'].rootAssembly
 	region=a.sets['Wire-5%s'%rowname]
-	datum1 = a.datums[a.features['CSYS_RS%s'%rowname].id]
+	datum1 = a.datums[a.features['CSYS_RR%s'%rowname].id]
 	csa = a.SectionAssignment(sectionName='HINGE', region=region)
 	a.ConnectorOrientation(region=csa.getSet(), localCsys1=datum1)
 
 	a = mdb.models['Model-1'].rootAssembly
 	region=a.sets['Wire-6%s'%rowname]
-	datum1 = a.datums[a.features['CSYS_RS2%s'%rowname].id]
+	datum1 = a.datums[a.features['CSYS_RR2%s'%rowname].id]
 	csa = a.SectionAssignment(sectionName='HINGE', region=region)
 	a.ConnectorOrientation(region=csa.getSet(), localCsys1=datum1)
 
 	a = mdb.models['Model-1'].rootAssembly
 	region=a.sets['Wire-7%s'%rowname]
-	datum1 = a.datums[a.features['CSYS_LS%s'%rowname].id]
+	datum1 = a.datums[a.features['CSYS_LL%s'%rowname].id]
 	csa = a.SectionAssignment(sectionName='HINGE', region=region)
 	a.ConnectorOrientation(region=csa.getSet(), localCsys1=datum1)
 
 	a = mdb.models['Model-1'].rootAssembly
 	region=a.sets['Wire-8%s'%rowname]
-	datum1 = a.datums[a.features['CSYS_LS2%s'%rowname].id]
+	datum1 = a.datums[a.features['CSYS_LL2%s'%rowname].id]
 	csa = a.SectionAssignment(sectionName='HINGE', region=region)
 	a.ConnectorOrientation(region=csa.getSet(), localCsys1=datum1)
 

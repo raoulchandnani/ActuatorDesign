@@ -186,7 +186,184 @@ def getResults2(ModelName):
 	odb.close()
 	return disppTip,disppTip2
 	
-	
+def find_strain(JobName, StepName, FOTYPE, SetName = None, object = 'assembly', 
+
+                object_name = None, strain_metric = 'mises'):
+
+    """Finds Strain for a Set if SetName defined.Currently only works for mises.
+
+        Otherwise finds maxMises for the whole model
+        - object = 'assembly' or 'instance' (in that case specify name of instance.
+
+        - strain_metric = 'mises' to get maximum equivalent stress and 'principal'"""
+
+    odbName = JobName + '.odb'
+
+    odb = visualization.openOdb(odbName)
+
+    lastFrame = odb.steps[StepName].frames[-1]
+
+    deformation = lastFrame.fieldOutputs[FOTYPE]
+
+    # If not Set defined, get the value for the whole thing
+
+    if SetName == None:
+
+        raise NotImplementedError
+
+    else:
+
+        elsetName = SetName
+
+        elset = elemset = None
+
+        assembly = odb.rootAssembly
+
+        #Check to see if the element set exists
+
+        #in the assembly
+
+        if elsetName:
+
+           try:
+
+               if object == 'assembly':
+
+                   elemset = assembly.elementSets[elsetName]
+
+                   region = " in the element set : " + elsetName;
+
+               elif object == 'instance':
+
+                   elemset = assembly.instances[object_name.upper()].elementSets[elsetName.upper()]                    
+
+           except KeyError:
+
+               print assembly.elementSets
+
+               print 'An assembly level elset named %s does' \
+                      'not exist in the output database %s' \
+                      % (elsetName, odbName)
+
+               exit(0)
+
+        """ Initialize maximum values """
+
+        maxStrain = -0.1
+
+        maxStrainElem = 0
+
+        maxStep = "_None_"
+
+        maxFrame = -1
+
+        Stress = 'S'
+
+        isStressPresent = 0
+
+        for step in odb.steps.values():
+
+           if StepName == None or step.name == StepName:
+
+               if elemset:
+
+                   strainSet = deformation.getSubset(region=elemset)
+
+               for strainValue in strainSet.values:
+
+                   if strain_metric == 'mises':
+
+                      strain_i = strainValue.mises
+
+                   elif strain_metric == 'principal':
+
+                      strain_i = abs(strainValue.maxPrincipal)
+                      strain_act=strainValue.maxPrincipal					  
+
+                   elif strain_metric == 'Shear':
+
+                      strain_i = abs(strainValue.data[5])
+                      strain_act=strainValue.data[5]					
+                   if (strain_i > maxStrain):
+                       
+					   maxStrain = strain_i
+					   retStrain = strain_act
+
+					   maxStrainElem = strainValue.elementLabel
+
+					   maxStep = step.name
+
+					   maxFrame = lastFrame.incrementNumber
+
+        odb.close()
+
+        return retStrain	
+
+
+
+	"""
+	This ODB reading script does the following:
+	-Retrieves the displacement at TIPNODE
+	-Scans for max. Mises stress in a part (if set exists)
+	"""
+def find_stress(ModelName,elsetName):
+	# Open the output database.
+	print 'Made it in'
+	odbName = ModelName+'.odb'
+	print odbName
+	odb = visualization.openOdb(odbName)
+	lastFrame = odb.steps['RBM'].frames[-1]
+	#elsetName='ALL_PART'
+	elset = elemset = None
+	region = "over the entire model"
+	assembly = odb.rootAssembly
+
+	#Check to see if the element set exists
+	#in the assembly
+
+	if elsetName:
+	   try:
+		   elemset = assembly.elementSets[elsetName]
+		   region = " in the element set : " + elsetName;
+	   except KeyError:
+		   print 'An assembly level elset named %s does' \
+				  'not exist in the output database %s' \
+				  % (elsetName, odbName)
+		   odb.close()
+		   exit(0)
+		   
+	""" Initialize maximum values """
+	maxMises = -0.1
+	maxVMElem = 0
+	maxStep = "_None_"
+	maxFrame = -1
+	Stress = 'S'
+	isStressPresent = 0
+	for step in odb.steps.values():
+	   print 'Processing Step:', step.name
+	   for frame in step.frames:
+		   allFields = frame.fieldOutputs
+		   if (allFields.has_key(Stress)):
+			   isStressPresent = 1
+			   stressSet = allFields[Stress]
+			   if elemset:
+				   stressSet = stressSet.getSubset(
+					   region=elemset)      
+			   for stressValue in stressSet.values:                
+				   if (stressValue.mises > maxMises):
+					   maxMises = stressValue.mises
+					   maxVMElem = stressValue.elementLabel
+					   maxStep = step.name
+					   maxFrame = frame.incrementNumber
+	if(isStressPresent):
+	   print 'Maximum von Mises stress %s is %f in element %d'%(
+		   region, maxMises, maxVMElem)
+	   print 'Location: frame # %d  step:  %s '%(maxFrame,maxStep)
+	else:
+	   print 'Stress output is not available in' \
+			 'the output database : %s\n' %(odb.name)  		
+        odb.close()
+        return maxMises		
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def createXYPlot(vpOrigin, vpName, plotName, data):
 
