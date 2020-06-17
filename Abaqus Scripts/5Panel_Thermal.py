@@ -19,12 +19,12 @@ import xyPlot
 import connectorBehavior
 import displayGroupOdbToolset as dgo
 from math import atan, sin, cos, tan
-from Post_P_Script import getResults,getResults2,find_strain,find_stress
+#from Post_P_Script import getResults,getResults2,find_strain,find_stress
 ##########################
 #
 # Variables for Plates
 H=0.55; # Horizontal plate length 
-V=0.125; # Vertical plate length
+V=0.1275; # Vertical plate length
 G=0.030;   # Gap length
 HNG=0.030; # Hinge height
 D=0.015; #Hinge distance from edge
@@ -37,9 +37,9 @@ elast_thk=0.005
 Total = 1.000
 Case=1
 # Variables for TT
-T1=1.12
-T2=0.78
-T3=0.19
+T1=0.35
+T2=0.39
+T3=0.26
 ORTT=0.020
 IRTT=0.010
 G=0.03
@@ -54,7 +54,7 @@ seedsize=G/4
 # T1=0.72
 # T2=0.72
 # T3=0.05
-test=0
+test=1
 ##########################
 
 
@@ -1350,17 +1350,17 @@ else:
 		region=region, u1=SET, u2=SET, u3=SET, ur1=SET, ur2=SET, ur3=SET, 
 		amplitude=UNSET, fixed=OFF, distributionType=UNIFORM, fieldName='', 
 		localCsys=None)	
-a = mdb.models['Model-1'].rootAssembly
-r1 = a.referencePoints
-if Case==1:
-	refPoints1=(r1[RP1],r1[RP2],r1[RP3],r1[RP4],r1[RP6],r1[RP7],r1[RP9],r1[RP10],r1[RP11],r1[RP12], r1[RP13],r1[RP16],r1[RP17],r1[RP18],r1[RP19],r1[RP23],r1[RP24],r1[RP25], )
-else:
-	refPoints1=(r1[RP1],r1[RP2],r1[RP3],r1[RP4],r1[RP5],r1[RP6],r1[RP7],r1[RP8],r1[RP9],r1[RP10],r1[RP11],r1[RP12], r1[RP13],r1[RP16],r1[RP17],r1[RP18],r1[RP19],r1[RP20],r1[RP23],r1[RP24],r1[RP25], )
-region = regionToolset.Region(referencePoints=refPoints1)
-mdb.models['Model-1'].DisplacementBC(name='Fix Lateral', createStepName='RBM', 
-	region=region, u1=UNSET, u2=SET, u3=UNSET, ur1=UNSET, ur2=UNSET, ur3=UNSET, 
-	amplitude=UNSET, fixed=OFF, distributionType=UNIFORM, fieldName='', 
-	localCsys=None)
+# a = mdb.models['Model-1'].rootAssembly
+# r1 = a.referencePoints
+# if Case==1:
+	# refPoints1=(r1[RP1],r1[RP2],r1[RP3],r1[RP4],r1[RP6],r1[RP7],r1[RP9],r1[RP10],r1[RP11],r1[RP12], r1[RP13],r1[RP16],r1[RP17],r1[RP18],r1[RP19],r1[RP23],r1[RP24],r1[RP25], )
+# else:
+	# refPoints1=(r1[RP1],r1[RP2],r1[RP3],r1[RP4],r1[RP5],r1[RP6],r1[RP7],r1[RP8],r1[RP9],r1[RP10],r1[RP11],r1[RP12], r1[RP13],r1[RP16],r1[RP17],r1[RP18],r1[RP19],r1[RP20],r1[RP23],r1[RP24],r1[RP25], )
+# region = regionToolset.Region(referencePoints=refPoints1)
+# mdb.models['Model-1'].DisplacementBC(name='Fix Lateral', createStepName='RBM', 
+	# region=region, u1=UNSET, u2=SET, u3=UNSET, ur1=UNSET, ur2=UNSET, ur3=UNSET, 
+	# amplitude=UNSET, fixed=OFF, distributionType=UNIFORM, fieldName='', 
+	# localCsys=None)
 
 ## BCs##
 mdb.models['Model-1'].SmoothStepAmplitude(name='Amp-1', timeSpan=STEP, data=((

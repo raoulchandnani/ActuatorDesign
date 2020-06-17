@@ -46,7 +46,7 @@ LD=0.1
 theta=asin((sin(phiR)-sin(phiL))/3)
 Hnet=(Total)/(3*cos(theta)+cos(phiL)+cos(phiR));
 H=Hnet-G;
-test=0
+test=1
 ##########################
 
 

@@ -24,7 +24,7 @@ from Post_P_Script import getResults
 ##########################
 # Variables
 H=0.550; # Horizontal plate length 
-V=0.125; # Vertical plate length
+V=0.1275; # Vertical plate length
 G=0.030;   # Gap length
 HNG=0.030; # Hinge height
 D=0.015; #Hinge distance from edge
@@ -42,25 +42,25 @@ phiR=0.2;
 elast_thk=0.005
 Total = 1.000
 seedsize=G/4
-LD=0.15
+LD=0.1575
 theta=asin((sin(phiR)-sin(phiL))/3)
 Hnet=(Total)/(3*cos(theta)+cos(phiL)+cos(phiR));
 H=Hnet-G;
 test=1
 Case=1
 # Variables for TT
-T1=0.13
-T2=0.09
-T3=0.19
-T1T=0.13
-T2T=0.09
-T3T=0.19
-T1L=0.13
-T2L=0.09
-T3L=0.19
-T12=0.44
-T22=1.03
-T32=0.19
+T1=0.35
+T2=0.39
+T3=0.26
+T1T=0.35
+T2T=0.39
+T3T=0.26
+T1L=0.35
+T2L=0.39
+T3L=0.26
+T12=0.41
+T22=0.39
+T32=0.26
 ORTT=0.02
 IRTT=0.01
 ##########################
@@ -2283,16 +2283,27 @@ mdb.models['Model-1'].ImplicitDynamicsStep(name='RBM', previous='Initial',
     initialConditions=OFF,timePeriod=10.0)
 mdb.models['Model-1'].steps['RBM'].setValues(nlgeom=ON)	
 mdb.models['Model-1'].fieldOutputRequests['F-Output-1'].setValues(variables=(
-    'S', 'E', 'PE', 'LE', 'U', 'RF', 'CF','NT','COORD'))
+    'S', 'E', 'PE', 'LE', 'U', 'RF', 'CF','NT','COORD','THE','EE'))
 mdb.models['Model-1'].ImplicitDynamicsStep(name='RBM2', previous='RBM', 
     application=QUASI_STATIC, nohaf=OFF, amplitude=RAMP, alpha=DEFAULT, 
     initialConditions=OFF,timePeriod=10.0)
 mdb.models['Model-1'].steps['RBM2'].setValues(nlgeom=ON)	
 mdb.models['Model-1'].fieldOutputRequests['F-Output-1'].setValues(variables=(
-    'S', 'E', 'PE', 'LE', 'U', 'RF', 'CF','NT','COORD'))
+    'S', 'E', 'PE', 'LE', 'U', 'RF', 'CF','NT','COORD','THE','EE'))
 
 #Define BCs				
 print 'Defining all BCs'
+DVct=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP12].pointOn
+DVct2=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP8].pointOn
+a = mdb.models['Model-1'].rootAssembly
+e1 = a.instances['Elastomer'].faces 
+edges1 = e1.findAt(((DVct[0],DVct[1],DVct2[2]-0.5*elast_thk), ))
+e2 = a.instances['Elastomer'].faces
+edges2 = e1.findAt(((-DVct[0],DVct[1],DVct2[2]-0.5*elast_thk), ))
+region = a.Set(faces=edges1+edges2, name='Set-43')
+mdb.models['Model-1'].EncastreBC(name='Fix_Elast', createStepName='RBM', 
+	region=region, localCsys=None)
+	
 for rowname in ['','T','L']:
 	a = mdb.models['Model-1'].rootAssembly
 	r1 = a.referencePoints
@@ -2320,21 +2331,27 @@ for rowname in ['','T','L']:
 			region=region, u1=SET, u2=SET, u3=SET, ur1=SET, ur2=SET, ur3=SET, 
 			amplitude=UNSET, fixed=OFF, distributionType=UNIFORM, fieldName='', 
 			localCsys=None)	
-	a = mdb.models['Model-1'].rootAssembly
-	r1 = a.referencePoints
-	if Case==1:
-		refPoints1=(r1[eval('RP%s1'%rowname)],r1[eval('RP%s2'%rowname)],r1[eval('RP%s3'%rowname)],r1[eval('RP%s4'%rowname)],r1[eval('RP%s6'%rowname)],r1[eval('RP%s7'%rowname)],r1[eval('RP%s9'%rowname)],r1[eval('RP%s10'%rowname)],r1[eval('RP%s11'%rowname)],r1[eval('RP%s12'%rowname)], r1[eval('RP%s13'%rowname)],r1[eval('RP%s16'%rowname)],r1[eval('RP%s17'%rowname)],r1[eval('RP%s18'%rowname)],r1[eval('RP%s19'%rowname)],r1[eval('RP%s23'%rowname)],r1[eval('RP%s24'%rowname)],r1[eval('RP%s25'%rowname)], )
-	else:
-		refPoints1=(r1[eval('RP%s1'%rowname)],r1[eval('RP%s2'%rowname)],r1[eval('RP%s3'%rowname)],r1[eval('RP%s4'%rowname)],r1[eval('RP%s5'%rowname)],r1[eval('RP%s6'%rowname)],r1[eval('RP%s7'%rowname)],r1[eval('RP%s8'%rowname)],r1[eval('RP%s9'%rowname)],r1[eval('RP%s10'%rowname)],r1[eval('RP%s11'%rowname)],r1[eval('RP%s12'%rowname)], r1[eval('RP%s13'%rowname)],r1[eval('RP%s16'%rowname)],r1[eval('RP%s17'%rowname)],r1[eval('RP%s18'%rowname)],r1[eval('RP%s19'%rowname)],r1[eval('RP%s20'%rowname)],r1[eval('RP%s23'%rowname)],r1[eval('RP%s24'%rowname)],r1[eval('RP%s25'%rowname)], )
-	region = regionToolset.Region(referencePoints=refPoints1)
-	mdb.models['Model-1'].DisplacementBC(name='Fix Lateral%s'%rowname, createStepName='RBM', 
-		region=region, u1=UNSET, u2=SET, u3=UNSET, ur1=UNSET, ur2=UNSET, ur3=UNSET, 
-		amplitude=UNSET, fixed=OFF, distributionType=UNIFORM, fieldName='', 
-		localCsys=None)
+	# a = mdb.models['Model-1'].rootAssembly
+	# r1 = a.referencePoints
+	# if Case==1:
+		# refPoints1=(r1[eval('RP%s1'%rowname)],r1[eval('RP%s2'%rowname)],r1[eval('RP%s3'%rowname)],r1[eval('RP%s4'%rowname)],r1[eval('RP%s6'%rowname)],r1[eval('RP%s7'%rowname)],r1[eval('RP%s9'%rowname)],r1[eval('RP%s10'%rowname)],r1[eval('RP%s11'%rowname)],r1[eval('RP%s12'%rowname)], r1[eval('RP%s13'%rowname)],r1[eval('RP%s16'%rowname)],r1[eval('RP%s17'%rowname)],r1[eval('RP%s18'%rowname)],r1[eval('RP%s19'%rowname)],r1[eval('RP%s23'%rowname)],r1[eval('RP%s24'%rowname)],r1[eval('RP%s25'%rowname)], )
+	# else:
+		# refPoints1=(r1[eval('RP%s1'%rowname)],r1[eval('RP%s2'%rowname)],r1[eval('RP%s3'%rowname)],r1[eval('RP%s4'%rowname)],r1[eval('RP%s5'%rowname)],r1[eval('RP%s6'%rowname)],r1[eval('RP%s7'%rowname)],r1[eval('RP%s8'%rowname)],r1[eval('RP%s9'%rowname)],r1[eval('RP%s10'%rowname)],r1[eval('RP%s11'%rowname)],r1[eval('RP%s12'%rowname)], r1[eval('RP%s13'%rowname)],r1[eval('RP%s16'%rowname)],r1[eval('RP%s17'%rowname)],r1[eval('RP%s18'%rowname)],r1[eval('RP%s19'%rowname)],r1[eval('RP%s20'%rowname)],r1[eval('RP%s23'%rowname)],r1[eval('RP%s24'%rowname)],r1[eval('RP%s25'%rowname)], )
+	# region = regionToolset.Region(referencePoints=refPoints1)
+	# mdb.models['Model-1'].DisplacementBC(name='Fix Lateral%s'%rowname, createStepName='RBM', 
+		# region=region, u1=UNSET, u2=SET, u3=UNSET, ur1=UNSET, ur2=UNSET, ur3=UNSET, 
+		# amplitude=UNSET, fixed=OFF, distributionType=UNIFORM, fieldName='', 
+		# localCsys=None)
 
 ## BCs##
 mdb.models['Model-1'].SmoothStepAmplitude(name='Amp-1', timeSpan=STEP, data=((
     0.0, 0.0), (2.0, 0.2), (4.0, 0.4), (6.0, 0.6), (8.0, 0.8), (10.0, 1.0)))
+mdb.models['Model-1'].SmoothStepAmplitude(name='Amp-2', timeSpan=STEP, data=((
+    0.0,T1), (2.0,0.2*(T12-T1)+T1), (4.0,0.4*(T12-T1)+T1), (6.0,0.6*(T12-T1)+T1), (8.0,0.8*(T12-T1)+T1), (10.0,T12)))	
+mdb.models['Model-1'].SmoothStepAmplitude(name='Amp-3', timeSpan=STEP, data=((
+    0.0,T2), (2.0,0.2*(T22-T2)+T2), (4.0,0.4*(T22-T2)+T2), (6.0,0.6*(T22-T2)+T2), (8.0,0.8*(T22-T2)+T2), (10.0,T22)))	
+mdb.models['Model-1'].SmoothStepAmplitude(name='Amp-4', timeSpan=STEP, data=((
+    0.0,T3), (2.0,0.2*(T32-T3)+T3), (4.0,0.4*(T32-T3)+T3), (6.0,0.6*(T32-T3)+T3), (8.0,0.8*(T32-T3)+T3), (10.0,T32)))		
 # mdb.models['Model-1'].SmoothStepAmplitude(name='Amp-1', timeSpan=STEP, data=((
     # 0.0, 0.0), (1.0, 0.1), (2.0, 0.2), (3.0, 0.3), (4.0, 0.4), (5.0, 0.5), (6.0, 0.6), (7.0, 0.7), (8.0, 0.8), (9.0, 0.9), (10.0, 1.0)))
 for rowname in ['','T','L']:	
@@ -2382,12 +2399,31 @@ for rowname in ['','T','L']:
 		stepName='RBM', amplitude='Amp-1', magnitudes=(eval('T3%s'%rowname), ))			
 		
 mdb.models['Model-1'].predefinedFields['Predefined Field-1'].setValuesInStep(
-	stepName='RBM2', magnitudes=(eval('T12')))
+	stepName='RBM2', amplitude='Amp-2',magnitudes=(1))
 mdb.models['Model-1'].predefinedFields['Predefined Field-2'].setValuesInStep(
-	stepName='RBM2', magnitudes=(eval('T22')))		
+	stepName='RBM2', amplitude='Amp-3', magnitudes=(1))		
 mdb.models['Model-1'].predefinedFields['Predefined Field-3'].setValuesInStep(
-	stepName='RBM2', magnitudes=(eval('T32')))
+	stepName='RBM2',  amplitude='Amp-4',magnitudes=(1))
 
+## Pressure Load
+a = mdb.models['Model-1'].rootAssembly
+s1 = a.instances['Elastomer'].faces
+DVct=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP8].pointOn
+DVct2=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP13].pointOn
+DVct3=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP5].pointOn
+DVct4=mdb.models['Model-1'].rootAssembly.instances['Left_Plate'].datums[DP8].pointOn
+DVct5=mdb.models['Model-1'].rootAssembly.instances['Middle_Plate'].datums[DP13].pointOn
+DVct6=mdb.models['Model-1'].rootAssembly.instances['Right_Plate_2'].datums[DP5].pointOn
+DVct7=mdb.models['Model-1'].rootAssembly.instances['Right_Plate_2'].datums[DP13].pointOn
+DVct8=mdb.models['Model-1'].rootAssembly.instances['Right_Plate_2'].datums[DP8].pointOn
+DVct9=mdb.models['Model-1'].rootAssembly.instances['Right_Plate'].datums[DP5].pointOn
+side1Faces1 = s1.findAt(((0.5*(DVct[0]-0.5*Total),0,DVct[2]-elast_thk), ), ((DVct2[0],0,DVct2[2]-elast_thk), ), ((0.5*(DVct3[0]+DVct4[0]),0,0.5*(DVct3[2]+DVct4[2])-elast_thk), ), 
+((DVct5[0],0,DVct5[2]-elast_thk), ), ((0.5*(DVct8[0]+DVct9[0]),0,0.5*(DVct8[2]+DVct9[2])-elast_thk), ), ((DVct7[0],0,DVct7[2]-elast_thk), ), ((0.5*(DVct6[0]+0.5*Total),0,DVct6[2]-elast_thk), ))
+region = a.Surface(side1Faces=side1Faces1, name='Elastomer_Surf')
+mdb.models['Model-1'].Pressure(name='Aero_Pressure', createStepName='RBM', 
+    region=region, distributionType=UNIFORM, field='', magnitude=13750.0, 
+    amplitude=UNSET)
+	
 #Define Sets
 print 'Defining Sets'
 
