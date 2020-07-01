@@ -19,7 +19,7 @@ import xyPlot
 import connectorBehavior
 import displayGroupOdbToolset as dgo
 from math import atan, sin, cos, tan
-#from Post_P_Script import getResults,getResults2,find_strain,find_stress
+from Post_P_Script import getResults,getResults2,find_strain,find_stress
 ##########################
 #
 # Variables for Plates
@@ -33,23 +33,33 @@ phiR=0.2;
 theta_m=0.0;
 theta_l=-0.4;
 theta_l2=0.4;
-elast_thk=0.005
+elast_thk=-0.005
 Total = 1.000
 Case=1
 # Variables for TT
-T1=0.35
-T2=0.39
-T3=0.26
+T1=0.5
+T2=0.5
+T3=0.12
 ORTT=0.020
 IRTT=0.010
 G=0.03
-HNG=0.03
+HNG=-0.03
 phiL=0.2
 phiR=0.2
 
 theta=asin((sin(phiR)-sin(phiL))/3)
 Hnet=(Total)/(3*cos(theta)+cos(phiL)+cos(phiR));
 H=Hnet-G;
+# H1=0.2-G
+# H2=0.25-G
+# H3=0.10797-G
+# H4=0.25-G
+# H5=0.2-
+H1=H
+H2=H
+H3=H
+H4=H
+H5=H
 seedsize=G/4
 # T1=0.72
 # T2=0.72
@@ -131,93 +141,94 @@ edges = e.findAt(((ORTT*cos(pi/4), ORTT*sin(pi/4), -(0.5*V-D)), ), ((-ORTT*cos(p
     ), ((ORTT*cos(pi/4), -ORTT*sin(pi/4), (0.5*V-D)), ), ((-ORTT*cos(pi/4), -ORTT*sin(pi/4), (0.5*V-D)), ), (
     (-ORTT*cos(pi/4), ORTT*sin(pi/4), -(0.5*V-D)), ), ((ORTT*cos(pi/4), -ORTT*sin(pi/4), -(0.5*V-D)), ))
 p.Set(edges=edges, name='Circumferential_edges')
-	
-s = mdb.models['Model-1'].ConstrainedSketch(name='__profile__', 
-	sheetSize=200.0)
-g, v, d, c = s.geometry, s.vertices, s.dimensions, s.constraints
-s.setPrimaryObject(option=STANDALONE)
-s.rectangle(point1=((-0.5*H), (-0.5*V)), point2=(0.5*H,0.5*V))
-p = mdb.models['Model-1'].Part(name='Plate', dimensionality=THREE_D, 
-	type=DEFORMABLE_BODY)
-p = mdb.models['Model-1'].parts['Plate']
-p.BaseShell(sketch=s)
-s.unsetPrimaryObject()
-p = mdb.models['Model-1'].parts['Plate']
-session.viewports['Viewport: 1'].setValues(displayedObject=p)
-del mdb.models['Model-1'].sketches['__profile__']
 
-#Defining the face partitions
-print 'Partitioning part'
-p = mdb.models['Model-1'].parts['Plate']
-f1, e2, d2 = p.faces, p.edges, p.datums
-t = p.MakeSketchTransform(sketchPlane=f1.findAt(coordinates=(0, 
-	0, 0.0), normal=(0.0, 0.0, 1.0)), sketchUpEdge=e2.findAt(
-	coordinates=(0.5*H,0, 0.0)), sketchPlaneSide=SIDE1, origin=(0, 0,0.0))
-s = mdb.models['Model-1'].ConstrainedSketch(name='__profile__', 
-	sheetSize=459.88, gridSpacing=11.49, transform=t)
-g, v, d, c = s.geometry, s.vertices, s.dimensions, s.constraints
-s.setPrimaryObject(option=SUPERIMPOSE)
-p = mdb.models['Model-1'].parts['Plate']
-p.projectReferencesOntoSketch(sketch=s, filter=COPLANAR_EDGES)
+for plate_num in [1,2,3,4,5]:
+	s = mdb.models['Model-1'].ConstrainedSketch(name='__profile__', 
+		sheetSize=200.0)
+	g, v, d, c = s.geometry, s.vertices, s.dimensions, s.constraints
+	s.setPrimaryObject(option=STANDALONE)
+	s.rectangle(point1=((-0.5*eval('H%i'%plate_num)), (-0.5*V)), point2=(0.5*eval('H%i'%plate_num),0.5*V))
+	p = mdb.models['Model-1'].Part(name='Plate%i'%plate_num, dimensionality=THREE_D, 
+		type=DEFORMABLE_BODY)
+	p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
+	p.BaseShell(sketch=s)
+	s.unsetPrimaryObject()
+	p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
+	del mdb.models['Model-1'].sketches['__profile__']
 
-#s.Line(point1=(0.0, 0.5*V), point2=(0.0, -0.5*V))
-#s.Line(point1=(-0.5*H, 0.0), point2=(0.5*H, 0.0))
-s.rectangle(point1=(-(0.5*H-D), -(0.5*V-D)), point2=((0.5*H-D), (0.5*V-D)))
-p = mdb.models['Model-1'].parts['Plate']
-f = p.faces
-pickedFaces = f.findAt(((0,0, 0.0), ))
-e, d1 = p.edges, p.datums
-p.PartitionFaceBySketch(sketchUpEdge=e.findAt(coordinates=(0.5*H,0, 0.0)), 
-	faces=pickedFaces, sketch=s)
-s.unsetPrimaryObject()
-del mdb.models['Model-1'].sketches['__profile__']
-p = mdb.models['Model-1'].parts['Plate']
-s = p.faces
-side1Faces = s.findAt(((0, 0, 0.0), ))
-# side1Faces = s.findAt(((0, 0, 0.0), ), (((0.5*H-0.5*D), 0.25*V, 0.0), ), (((0.5*H-0.5*D), -0.25*V, 0.0), ), ((
-    # -(0.5*H-0.5*D), 0.25*V, 0.0), ), ((-(0.5*H-0.5*D), -0.25*V, 0.0), ))
-p.Surface(side2Faces=side1Faces, name='Surf-Bottom')
+	#Defining the face partitions
+	print 'Partitioning part'
+	p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
+	f1, e2, d2 = p.faces, p.edges, p.datums
+	t = p.MakeSketchTransform(sketchPlane=f1.findAt(coordinates=(0, 
+		0, 0.0), normal=(0.0, 0.0, 1.0)), sketchUpEdge=e2.findAt(
+		coordinates=(0.5*eval('H%i'%plate_num),0, 0.0)), sketchPlaneSide=SIDE1, origin=(0, 0,0.0))
+	s = mdb.models['Model-1'].ConstrainedSketch(name='__profile__', 
+		sheetSize=459.88, gridSpacing=11.49, transform=t)
+	g, v, d, c = s.geometry, s.vertices, s.dimensions, s.constraints
+	s.setPrimaryObject(option=SUPERIMPOSE)
+	p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
+	p.projectReferencesOntoSketch(sketch=s, filter=COPLANAR_EDGES)
 
-###Datum Points
-p = mdb.models['Model-1'].parts['Plate']
-DP=p.DatumPointByCoordinate(coords=((0.5*H-D), 0.5*V-D, 0))
-DP2=DP.id
-p = mdb.models['Model-1'].parts['Plate']
-DP=p.DatumPointByCoordinate(coords=((0.5*H-D), -0.5*V+D, 0))
-DP1=DP.id
-p = mdb.models['Model-1'].parts['Plate']
-DP=p.DatumPointByCoordinate(coords=(-(0.5*H-D), 0.5*V-D, 0))
-DP3=DP.id
-p = mdb.models['Model-1'].parts['Plate']
-DP=p.DatumPointByCoordinate(coords=(-(0.5*H-D), -0.5*V+D, 0))
-DP4=DP.id
-p = mdb.models['Model-1'].parts['Plate']
-DP=p.DatumPointByCoordinate(coords=((0.5*H), 0.5*V, 0))
-DP6=DP.id
-p = mdb.models['Model-1'].parts['Plate']
-DP=p.DatumPointByCoordinate(coords=((0.5*H), -0.5*V, 0))
-DP5=DP.id
-p = mdb.models['Model-1'].parts['Plate']
-DP=p.DatumPointByCoordinate(coords=(-(0.5*H), 0.5*V, 0))
-DP7=DP.id
-p = mdb.models['Model-1'].parts['Plate']
-DP=p.DatumPointByCoordinate(coords=(-(0.5*H), -0.5*V, 0))
-DP8=DP.id
-p = mdb.models['Model-1'].parts['Plate']
-DP=p.DatumPointByCoordinate(coords=((0.5*(H+G)), 0.5*V-D, HNG))
-DP10=DP.id
-p = mdb.models['Model-1'].parts['Plate']
-DP=p.DatumPointByCoordinate(coords=((0.5*(H+G)), -0.5*V+D, HNG))
-DP9=DP.id
-p = mdb.models['Model-1'].parts['Plate']
-DP=p.DatumPointByCoordinate(coords=(-(0.5*(H+G)), 0.5*V-D, HNG))
-DP11=DP.id
-p = mdb.models['Model-1'].parts['Plate']
-DP=p.DatumPointByCoordinate(coords=(-(0.5*(H+G)), -0.5*V+D, HNG))
-DP12=DP.id
-p = mdb.models['Model-1'].parts['Plate']
-DP=p.DatumPointByCoordinate(coords=(0, 0, 0))
-DP13=DP.id
+	#s.Line(point1=(0.0, 0.5*V), point2=(0.0, -0.5*V))
+	#s.Line(point1=(-0.5*H, 0.0), point2=(0.5*H, 0.0))
+	s.rectangle(point1=(-(0.5*eval('H%i'%plate_num)-D), -(0.5*V-D)), point2=((0.5*eval('H%i'%plate_num)-D), (0.5*V-D)))
+	p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
+	f = p.faces
+	pickedFaces = f.findAt(((0,0, 0.0), ))
+	e, d1 = p.edges, p.datums
+	p.PartitionFaceBySketch(sketchUpEdge=e.findAt(coordinates=(0.5*eval('H%i'%plate_num),0, 0.0)), 
+		faces=pickedFaces, sketch=s)
+	s.unsetPrimaryObject()
+	del mdb.models['Model-1'].sketches['__profile__']
+	p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
+	s = p.faces
+	side1Faces = s.findAt(((0, 0, 0.0), ))
+	# side1Faces = s.findAt(((0, 0, 0.0), ), (((0.5*H-0.5*D), 0.25*V, 0.0), ), (((0.5*H-0.5*D), -0.25*V, 0.0), ), ((
+		# -(0.5*H-0.5*D), 0.25*V, 0.0), ), ((-(0.5*H-0.5*D), -0.25*V, 0.0), ))
+	p.Surface(side2Faces=side1Faces, name='Surf-Bottom')
+
+	###Datum Points
+	p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
+	DP=p.DatumPointByCoordinate(coords=((0.5*eval('H%i'%plate_num)-D), 0.5*V-D, 0))
+	DP2=DP.id
+	p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
+	DP=p.DatumPointByCoordinate(coords=((0.5*eval('H%i'%plate_num)-D), -0.5*V+D, 0))
+	DP1=DP.id
+	p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
+	DP=p.DatumPointByCoordinate(coords=(-(0.5*eval('H%i'%plate_num)-D), 0.5*V-D, 0))
+	DP3=DP.id
+	p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
+	DP=p.DatumPointByCoordinate(coords=(-(0.5*eval('H%i'%plate_num)-D), -0.5*V+D, 0))
+	DP4=DP.id
+	p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
+	DP=p.DatumPointByCoordinate(coords=((0.5*eval('H%i'%plate_num)), 0.5*V, 0))
+	DP6=DP.id
+	p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
+	DP=p.DatumPointByCoordinate(coords=((0.5*eval('H%i'%plate_num)), -0.5*V, 0))
+	DP5=DP.id
+	p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
+	DP=p.DatumPointByCoordinate(coords=(-(0.5*eval('H%i'%plate_num)), 0.5*V, 0))
+	DP7=DP.id
+	p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
+	DP=p.DatumPointByCoordinate(coords=(-(0.5*eval('H%i'%plate_num)), -0.5*V, 0))
+	DP8=DP.id
+	p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
+	DP=p.DatumPointByCoordinate(coords=((0.5*(eval('H%i'%plate_num)+G)), 0.5*V-D, HNG))
+	DP10=DP.id
+	p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
+	DP=p.DatumPointByCoordinate(coords=((0.5*(eval('H%i'%plate_num)+G)), -0.5*V+D, HNG))
+	DP9=DP.id
+	p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
+	DP=p.DatumPointByCoordinate(coords=(-(0.5*(eval('H%i'%plate_num)+G)), 0.5*V-D, HNG))
+	DP11=DP.id
+	p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
+	DP=p.DatumPointByCoordinate(coords=(-(0.5*(eval('H%i'%plate_num)+G)), -0.5*V+D, HNG))
+	DP12=DP.id
+	p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
+	DP=p.DatumPointByCoordinate(coords=(0, 0, 0))
+	DP13=DP.id
+
 
 #Assemble Parts
 print 'Placing Parts in Space'
@@ -225,26 +236,42 @@ print 'Placing Parts in Space'
 
 a = mdb.models['Model-1'].rootAssembly
 a.DatumCsysByDefault(CARTESIAN)
-p = mdb.models['Model-1'].parts['Plate']
+p = mdb.models['Model-1'].parts['Plate1']
+a.Instance(name='Left_Plate_2', part=p, dependent=ON)
+a = mdb.models['Model-1'].rootAssembly
+a.DatumCsysByDefault(CARTESIAN)
+p = mdb.models['Model-1'].parts['Plate2']
+a.Instance(name='Left_Plate', part=p, dependent=ON)
+a = mdb.models['Model-1'].rootAssembly
+a.DatumCsysByDefault(CARTESIAN)
+p = mdb.models['Model-1'].parts['Plate3']
 a.Instance(name='Middle_Plate', part=p, dependent=ON)
-
 a = mdb.models['Model-1'].rootAssembly
-a.LinearInstancePattern(instanceList=('Middle_Plate', ), direction1=(1.0, 0.0, 
-	0.0), direction2=(0.0, 1.0, 0.0), number1=3, number2=1, spacing1=(H+G), 
-	spacing2=(V+G))
+a.DatumCsysByDefault(CARTESIAN)
+p = mdb.models['Model-1'].parts['Plate4']
+a.Instance(name='Right_Plate', part=p, dependent=ON)
 a = mdb.models['Model-1'].rootAssembly
-a.LinearInstancePattern(instanceList=('Middle_Plate', ), direction1=(-1.0, 0.0, 
-	0.0), direction2=(0.0, 1.0, 0.0), number1=3, number2=1, spacing1=(H+G), 
-	spacing2=(V+G))
+a.DatumCsysByDefault(CARTESIAN)
+p = mdb.models['Model-1'].parts['Plate5']
+a.Instance(name='Right_Plate_2', part=p, dependent=ON)
+# a = mdb.models['Model-1'].rootAssembly
+# a.LinearInstancePattern(instanceList=('Middle_Plate', ), direction1=(1.0, 0.0, 
+	# 0.0), direction2=(0.0, 1.0, 0.0), number1=3, number2=1, spacing1=(H+G), 
+	# spacing2=(V+G))
+# a = mdb.models['Model-1'].rootAssembly
+# a.LinearInstancePattern(instanceList=('Middle_Plate', ), direction1=(-1.0, 0.0, 
+	# 0.0), direction2=(0.0, 1.0, 0.0), number1=3, number2=1, spacing1=(H+G), 
+	# spacing2=(V+G))
 
-mdb.models['Model-1'].rootAssembly.features.changeKey(
-	fromName='Middle_Plate-lin-2-1', toName='Right_Plate')
-mdb.models['Model-1'].rootAssembly.features.changeKey(
-	fromName='Middle_Plate-lin-2-1-1', toName='Left_Plate')
-mdb.models['Model-1'].rootAssembly.features.changeKey(fromName='Middle_Plate-lin-3-1', 
-	toName='Right_Plate_2')
-mdb.models['Model-1'].rootAssembly.features.changeKey(fromName='Middle_Plate-lin-3-1-1', 
-	toName='Left_Plate_2')
+# mdb.models['Model-1'].rootAssembly.features.changeKey(
+	# fromName='Middle_Plate-lin-2-1', toName='Right_Plate')
+# mdb.models['Model-1'].rootAssembly.features.changeKey(
+	# fromName='Middle_Plate-lin-2-1-1', toName='Left_Plate')
+# mdb.models['Model-1'].rootAssembly.features.changeKey(fromName='Middle_Plate-lin-3-1', 
+	# toName='Right_Plate_2')
+# mdb.models['Model-1'].rootAssembly.features.changeKey(fromName='Middle_Plate-lin-3-1-1', 
+	# toName='Left_Plate_2')
+
 Vct=[0,0,0]
 DVct=[-0.5*Total,-0.5*V+D,0]
 for loc in range(3):
@@ -460,9 +487,9 @@ s.Line(point1=(DVct[0], DVct[2]-elast_thk), point2=(DVct2[0], DVct2[2]-elast_thk
 DVct=mdb.models['Model-1'].rootAssembly.instances['Right_Plate_2'].datums[DP5].pointOn
 s.Line(point1=(DVct2[0], DVct2[2]-elast_thk), point2=(DVct[0], DVct[2]-elast_thk))
 DVct2=mdb.models['Model-1'].rootAssembly.instances['Right_Plate_2'].datums[DP9].pointOn
-DVct2=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP8].pointOn
+DVct4=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP8].pointOn
 DVct3=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP12].pointOn
-s.Line(point1=(DVct[0], DVct[2]-elast_thk), point2=(-DVct3[0], DVct2[2]-elast_thk))
+s.Line(point1=(DVct[0], DVct[2]-elast_thk), point2=(-DVct3[0], DVct4[2]-elast_thk))
 
 DVct=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP12].pointOn
 DVct2=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP8].pointOn
@@ -597,14 +624,15 @@ mdb.models['Model-1'].HomogeneousSolidSection(name='Stretchable',
     material='Elastomer', thickness=None)	
 print 'Assigning the Sections'
 
-p = mdb.models['Model-1'].parts['Plate']
-f = p.faces
-faces = f.getByBoundingBox(-H,-V,-G,H,V,G)
-region = p.Set(faces=faces, name='Set-1')
-p = mdb.models['Model-1'].parts['Plate']
-p.SectionAssignment(region=region, sectionName='Solid', offset=0.0, 
-	offsetType=TOP_SURFACE, offsetField='', 
-	thicknessAssignment=FROM_SECTION)
+for plate_num in [1,2,3,4,5]:	
+	p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
+	f = p.faces
+	faces = f.getByBoundingBox(-H,-V,-G,H,V,G)
+	region = p.Set(faces=faces, name='Set-1')
+	p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
+	p.SectionAssignment(region=region, sectionName='Solid', offset=0.0, 
+		offsetType=TOP_SURFACE, offsetField='', 
+		thicknessAssignment=FROM_SECTION)
 
 p = mdb.models['Model-1'].parts['Elastomer']
 f = p.faces
@@ -996,10 +1024,11 @@ csa = a.SectionAssignment(sectionName='BEAM', region=region)
 
 #Mesh Parts
 print 'Meshing the Part'
-p = mdb.models['Model-1'].parts['Plate']
-p.seedPart(size=seedsize, deviationFactor=0.1, minSizeFactor=0.1)		#G/6
-p = mdb.models['Model-1'].parts['Plate']
-p.generateMesh()
+for plate_num in [1,2,3,4,5]:	
+	p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
+	p.seedPart(size=seedsize, deviationFactor=0.1, minSizeFactor=0.1)		#G/6
+	p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
+	p.generateMesh()
 
 elemType1 = mesh.ElemType(elemCode=C3D8H, elemLibrary=STANDARD)
 elemType2 = mesh.ElemType(elemCode=C3D6, elemLibrary=STANDARD)
@@ -1200,10 +1229,11 @@ refPoints1=(r1[RP25], )
 region1=regionToolset.Region(referencePoints=refPoints1)
 mdb.models['Model-1'].RigidBody(name='RB_L_2', refPointRegion=region1, bodyRegion=region2)
 
-p = mdb.models['Model-1'].parts['Plate']
-s = p.elements
-side2Elements = s[:]
-p.Surface(side2Elements=side2Elements, name='Surf-Bottom')
+for plate_num in [1,2,3,4,5]:
+	p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
+	s = p.elements
+	side2Elements = s[:]
+	p.Surface(side2Elements=side2Elements, name='Surf-Bottom')
 
 
 DVct=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP13].pointOn
@@ -1473,6 +1503,15 @@ DVct2=mdb.models['Model-1'].rootAssembly.instances['Right_Plate_2'].datums[DP5].
 verts6 = v6.findAt(((DVct[0], DVct[1],DVct[2]), ), ((DVct2[0], DVct2[1],DVct2[2]), ))
 a.Set(vertices=verts5+verts1+verts3+verts4+verts6, name='TIPNODE')
 
+# x=np.linspace(-0.5,0.5,100)
+# DVct=mdb.models['Model-1'].rootAssembly.instances['Middle_Plate'].datums[DP8].pointOn
+# y=DVct[2]
+# p = mdb.models['Model-1'].parts['Elastomer']
+# for i in range(100):
+	# p.DatumPointByCoordinate(coords=(x[i], y-elast_thk, 0))
+	
+# elast=getResults2('Model-1')
+# np.savetxt("finalz.csv", finalz, delimiter=",")
 
 #####################################
 ### Creation/Execution of the Job ###

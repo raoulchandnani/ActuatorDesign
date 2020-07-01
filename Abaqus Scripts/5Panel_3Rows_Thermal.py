@@ -49,18 +49,24 @@ H=Hnet-G;
 test=1
 Case=1
 # Variables for TT
-T1=0.35
-T2=0.39
-T3=0.26
-T1T=0.35
-T2T=0.39
-T3T=0.26
-T1L=0.35
-T2L=0.39
-T3L=0.26
-T12=0.41
-T22=0.39
-T32=0.26
+T1=0.49
+T2=0.49
+T3=0.22
+# T1T=0.35
+# T2T=0.39
+# T3T=0.26
+# T1L=0.35
+# T2L=0.39
+# T3L=0.26
+T1T=T1
+T1L=T1
+T2T=T2
+T2L=T2
+T3T=T3
+T3L=T3
+T12=0.76
+T22=0.76
+T32=0.28
 ORTT=0.02
 IRTT=0.01
 ##########################
@@ -2301,7 +2307,7 @@ edges1 = e1.findAt(((DVct[0],DVct[1],DVct2[2]-0.5*elast_thk), ))
 e2 = a.instances['Elastomer'].faces
 edges2 = e1.findAt(((-DVct[0],DVct[1],DVct2[2]-0.5*elast_thk), ))
 region = a.Set(faces=edges1+edges2, name='Set-43')
-mdb.models['Model-1'].EncastreBC(name='Fix_Elast', createStepName='RBM', 
+mdb.models['Model-1'].EncastreBC(name='Fix_Elast', createStepName='Initial', 
 	region=region, localCsys=None)
 	
 for rowname in ['','T','L']:
