@@ -25,7 +25,7 @@ from math import atan2,cos,sin,pi
 with open("Aero_Data.txt", "r") as a:
     Data= [[float(num) for num in line.split(' ')] for line in a]
 Data=np.array(Data)    
-
+session.journalOptions.setValues(replayGeometry=COORDINATE, recoverGeometry=COORDINATE)
 ## Slice morphing data ##
 count=0
 Datalow=[[0.000000 for x in range(7)] for y in range(len(Data))]
@@ -44,8 +44,8 @@ s.setPrimaryObject(option=STANDALONE)
 p = mdb.models['Model-1'].Part(name='Part-1', dimensionality=THREE_D, 
 	type=DEFORMABLE_BODY)
 d2 = p.datums
-loftsections=[]
-for xloc in range(10):
+loftsectionsA=[]
+for xloc in range(100):
 	if xloc>0:
 		DP=p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=0.0315*xloc)
 		DPP=DP.id
@@ -71,9 +71,9 @@ for xloc in range(10):
 	Dataxloc=Dataxloc[~np.all(Dataxloc == 0, axis=1)]	
 	for i in range(len(Dataxloc)-2):
 		s.Spline(points=((Dataxloc[i,1], Dataxloc[i,2]-Datalow[0,2]), (Dataxloc[i+1,1], Dataxloc[i+1,2]-Datalow[0,2])))
-	s.Line(point1=(Dataxloc[0,1], Dataxloc[0,2]-Datalow[0,2]), point2=(Dataxloc[0,1], Dataxloc[0,2]-Datalow[0,2]+0.1))
-	s.Line(point1=(Dataxloc[0,1], Dataxloc[0,2]-Datalow[0,2]+0.1), point2=(Dataxloc[-2,1], Dataxloc[-2,2]-Datalow[0,2]+0.1))
-	s.Line(point1=(Dataxloc[-2,1], Dataxloc[-2,2]-Datalow[0,2]), point2=(Dataxloc[-2,1], Dataxloc[-2,2]-Datalow[0,2]+0.1))	
+	s.Line(point1=(Dataxloc[0,1], Dataxloc[0,2]-Datalow[0,2]), point2=(Dataxloc[0,1], Dataxloc[0,2]-Datalow[0,2]+0.01))
+	s.Line(point1=(Dataxloc[0,1], Dataxloc[0,2]-Datalow[0,2]+0.01), point2=(Dataxloc[-2,1], Dataxloc[-2,2]-Datalow[0,2]+0.01))
+	s.Line(point1=(Dataxloc[-2,1], Dataxloc[-2,2]-Datalow[0,2]), point2=(Dataxloc[-2,1], Dataxloc[-2,2]-Datalow[0,2]+0.01))	
 	p = mdb.models['Model-1'].parts['Part-1']
 	if xloc==0:
 		p.BaseWire(sketch=s)
@@ -88,9 +88,5 @@ for xloc in range(10):
 	e = p.edges
 	edges = e.getByBoundingBox(-1000000,-1000000,0.0315*xloc-0.0001,1000000,1000000,0.0315*xloc+0.0001)
 	p.Set(edges=edges, name='E%i'%xloc)
-	loftsections.append(p.sets['E%i'%xloc].edges[:])
-loftsections=tuple(loftsections)
-p.SolidLoft(loftsections=loftsections, startCondition=NONE, 
-    endCondition=NONE)
-stahp
+p.SolidLoft(loftsections=[p.sets['E%i'%xloc].edges[:] for xloc in range(100)], startCondition=NORMAL, endCondition=NORMAL)
 
