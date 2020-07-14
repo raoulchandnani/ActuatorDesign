@@ -23,11 +23,11 @@ from math import atan, sin, cos, tan
 from Post_P_Script import getResults
 ##########################
 # Variables
-H=0.550; # Horizontal plate length 
-V=0.1275; # Vertical plate length
-G=0.030;   # Gap length
-HNG=0.030; # Hinge height
-D=0.015; #Hinge distance from edge
+H=0.0507000547217638; # Horizontal plate length 
+V=0.5; # Vertical plate length
+G=0.025/4;   # Gap length
+HNG=-0.030/4; # Hinge height
+D=0.015/4; #Hinge distance from edge
 phiL=0.2; #initial angle
 phiR=0.2;
 # theta_m=0.0;
@@ -40,7 +40,7 @@ phiR=0.2;
 # theta_lt=-0.3;
 # theta_l2t=0.3;
 elast_thk=0.005
-Total = 1.000
+Total = 0.28
 seedsize=G/4
 LD=0.1575
 theta=asin((sin(phiR)-sin(phiL))/3)
@@ -67,8 +67,8 @@ T3L=T3
 T12=0.76
 T22=0.76
 T32=0.28
-ORTT=0.02
-IRTT=0.01
+ORTT=0.02/4
+IRTT=0.01/4
 ##########################
 
 
@@ -1699,56 +1699,6 @@ for rowname in ['','T','L']:
 	DVct=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2%s'%rowname].datums[DP12].pointOn
 	a = mdb.models['Model-1'].rootAssembly
 	a.DatumCsysByThreePoints(name='CSYS_LS2%s'%rowname, coordSysType=CARTESIAN, origin=(DVct[0],DVct[1], DVct[2]), point1=(DVct[0],DVct[1]+V, DVct[2]), point2=(0.0, 0.0, DVct[2]))		#CSYS for LHS Support 2
-
-# a = mdb.models['Model-1'].rootAssembly
-# DVct=mdb.models['Model-1'].rootAssembly.instances['Middle_PlateT'].datums[DP10].pointOn
-# a.DatumCsysByThreePoints(name='CSYS_MRT', coordSysType=CARTESIAN, origin=(DVct[0],DVct[1], DVct[2]), point1=(DVct[0],DVct[1]-V, DVct[2]), point2=(0.0, 0.0, DVct[2]))			#CSYS for Middle to Right 1
-# DVct=mdb.models['Model-1'].rootAssembly.instances['Middle_PlateT'].datums[DP9].pointOn
-# a = mdb.models['Model-1'].rootAssembly
-# a.DatumCsysByThreePoints(name='CSYS_MR2T', coordSysType=CARTESIAN, origin=(DVct[0],DVct[1], DVct[2]), point1=(DVct[0],DVct[1]-V, DVct[2]), point2=(0.0, 0.0, DVct[2]))			#CSYS for Middle to R2
-# DVct=mdb.models['Model-1'].rootAssembly.instances['Middle_PlateT'].datums[DP11].pointOn
-# a = mdb.models['Model-1'].rootAssembly
-# a.DatumCsysByThreePoints(name='CSYS_MLT', coordSysType=CARTESIAN, origin=(DVct[0],DVct[1], DVct[2]), point1=(DVct[0],DVct[1]+V, DVct[2]), point2=(0.0, 0.0, DVct[2]))		#CSYS for Middle to Left
-# DVct=mdb.models['Model-1'].rootAssembly.instances['Middle_PlateT'].datums[DP12].pointOn
-# a = mdb.models['Model-1'].rootAssembly
-# a.DatumCsysByThreePoints(name='CSYS_ML2T', coordSysType=CARTESIAN, origin=(DVct[0],DVct[1], DVct[2]), point1=(DVct[0],DVct[1]+V, DVct[2]), point2=(0.0, 0.0, DVct[2]))		#CSYS for Middle to L2
-# DVct=mdb.models['Model-1'].rootAssembly.instances['Right_PlateT'].datums[DP10].pointOn
-# a = mdb.models['Model-1'].rootAssembly
-# a.DatumCsysByThreePoints(name='CSYS_RST', coordSysType=CARTESIAN, origin=(DVct[0],DVct[1], DVct[2]), point1=(DVct[0],DVct[1]-V, DVct[2]), point2=(0.0, 0.0, DVct[2]))			#CSYS for  RHS Support
-# DVct=mdb.models['Model-1'].rootAssembly.instances['Right_PlateT'].datums[DP9].pointOn	
-# a = mdb.models['Model-1'].rootAssembly
-# a.DatumCsysByThreePoints(name='CSYS_RS2T', coordSysType=CARTESIAN, origin=(DVct[0],DVct[1], DVct[2]), point1=(DVct[0],DVct[1]-V, DVct[2]), point2=(0.0, 0.0, DVct[2]))			#CSYS for RHS Support 2
-# DVct=mdb.models['Model-1'].rootAssembly.instances['Left_PlateT'].datums[DP11].pointOn
-# a = mdb.models['Model-1'].rootAssembly
-# a.DatumCsysByThreePoints(name='CSYS_LST', coordSysType=CARTESIAN, origin=(DVct[0],DVct[1], DVct[2]), point1=(DVct[0],DVct[1]+V, DVct[2]), point2=(0.0, 0.0, DVct[2]))		#CSYS for LHS Support
-# DVct=mdb.models['Model-1'].rootAssembly.instances['Left_PlateT'].datums[DP12].pointOn
-# a = mdb.models['Model-1'].rootAssembly
-# a.DatumCsysByThreePoints(name='CSYS_LS2T', coordSysType=CARTESIAN, origin=(DVct[0],DVct[1], DVct[2]), point1=(DVct[0],DVct[1]+V, DVct[2]), point2=(0.0, 0.0, DVct[2]))		#CSYS for LHS Support 2
-
-# a = mdb.models['Model-1'].rootAssembly
-# DVct=mdb.models['Model-1'].rootAssembly.instances['Middle_PlateL'].datums[DP10].pointOn
-# a.DatumCsysByThreePoints(name='CSYS_MRL', coordSysType=CARTESIAN, origin=(DVct[0],DVct[1], DVct[2]), point1=(DVct[0],DVct[1]-V, DVct[2]), point2=(0.0, 0.0, DVct[2]))			#CSYS for Middle to Right 1
-# DVct=mdb.models['Model-1'].rootAssembly.instances['Middle_PlateL'].datums[DP9].pointOn
-# a = mdb.models['Model-1'].rootAssembly
-# a.DatumCsysByThreePoints(name='CSYS_MR2L', coordSysType=CARTESIAN, origin=(DVct[0],DVct[1], DVct[2]), point1=(DVct[0],DVct[1]-V, DVct[2]), point2=(0.0, 0.0, DVct[2]))			#CSYS for Middle to R2
-# DVct=mdb.models['Model-1'].rootAssembly.instances['Middle_PlateL'].datums[DP11].pointOn
-# a = mdb.models['Model-1'].rootAssembly
-# a.DatumCsysByThreePoints(name='CSYS_MLL', coordSysType=CARTESIAN, origin=(DVct[0],DVct[1], DVct[2]), point1=(DVct[0],DVct[1]+V, DVct[2]), point2=(0.0, 0.0, DVct[2]))		#CSYS for Middle to Left
-# DVct=mdb.models['Model-1'].rootAssembly.instances['Middle_PlateL'].datums[DP12].pointOn
-# a = mdb.models['Model-1'].rootAssembly
-# a.DatumCsysByThreePoints(name='CSYS_ML2L', coordSysType=CARTESIAN, origin=(DVct[0],DVct[1], DVct[2]), point1=(DVct[0],DVct[1]+V, DVct[2]), point2=(0.0, 0.0, DVct[2]))		#CSYS for Middle to L2
-# DVct=mdb.models['Model-1'].rootAssembly.instances['Right_PlateL'].datums[DP10].pointOn
-# a = mdb.models['Model-1'].rootAssembly
-# a.DatumCsysByThreePoints(name='CSYS_RSL', coordSysType=CARTESIAN, origin=(DVct[0],DVct[1], DVct[2]), point1=(DVct[0],DVct[1]-V, DVct[2]), point2=(0.0, 0.0, DVct[2]))			#CSYS for  RHS Support
-# DVct=mdb.models['Model-1'].rootAssembly.instances['Right_PlateL'].datums[DP9].pointOn	
-# a = mdb.models['Model-1'].rootAssembly
-# a.DatumCsysByThreePoints(name='CSYS_RS2L', coordSysType=CARTESIAN, origin=(DVct[0],DVct[1], DVct[2]), point1=(DVct[0],DVct[1]-V, DVct[2]), point2=(0.0, 0.0, DVct[2]))			#CSYS for RHS Support 2
-# DVct=mdb.models['Model-1'].rootAssembly.instances['Left_PlateL'].datums[DP11].pointOn
-# a = mdb.models['Model-1'].rootAssembly
-# a.DatumCsysByThreePoints(name='CSYS_LSL', coordSysType=CARTESIAN, origin=(DVct[0],DVct[1], DVct[2]), point1=(DVct[0],DVct[1]+V, DVct[2]), point2=(0.0, 0.0, DVct[2]))		#CSYS for LHS Support
-# DVct=mdb.models['Model-1'].rootAssembly.instances['Left_PlateL'].datums[DP12].pointOn
-# a = mdb.models['Model-1'].rootAssembly
-# a.DatumCsysByThreePoints(name='CSYS_LS2L', coordSysType=CARTESIAN, origin=(DVct[0],DVct[1], DVct[2]), point1=(DVct[0],DVct[1]+V, DVct[2]), point2=(0.0, 0.0, DVct[2]))		#CSYS for LHS Support 2
 
 print 'Assign Connector Sections'
 for rowname in ['','T','L']:
