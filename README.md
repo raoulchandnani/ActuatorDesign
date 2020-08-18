@@ -12,7 +12,7 @@ Code to generate and run model for a 5-panel hinged structure with conformal sur
 
 *5Panel_Thermal_OML* - Runs abaqus model of 5 panel hinged assembly using thermal actuation with conformal surface as an input
 
-*5Panel_Thermal_OML* - Runs abaqus model of multiple device 5 Panel hinged assembly using thermal actuation with conformal surface as an input
+*5Panel_Thermal_MultipleDevices* - Runs abaqus model of multiple device 5 Panel hinged assembly using thermal actuation with conformal surface as an input
 
 *TorqueTube* -  Runs abaqus model of SMA torque tube analysis
 
