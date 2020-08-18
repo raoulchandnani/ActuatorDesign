@@ -96,8 +96,8 @@ def getResults(ModelName):
 	return disppTip
 
 def getResults2(ModelName):
-	disppTip=[[0 for y in range(3)] for x in range(10000)]
-	disppTip2=[[0 for y in range(3)] for x in range(10000)]
+	disppTip=[0 for x in range(62)]
+	disppTip2=[0 for x in range(62)]
 	"""
 	This ODB reading script does the following:
 	-Retrieves the displacement at TIPNODE
@@ -115,8 +115,7 @@ def getResults2(ModelName):
 
 	# Selecting the node(s) to be queried
 	pTip = odb.rootAssembly.nodeSets['TIPNODE']
-	dtm = odb.rootAssembly.datumCsyses['Datum_Aero_Data']
-	session.viewports['Viewport: 1'].odbDisplay.basicOptions.setValues(transformationType=USER_SPECIFIED, datumCsys=dtm)	
+		
 	# Retrieve Y-displacements at the splines/connectors
 	print 'Retrieving ALL final displacements at ALL points'
 	dispField = firstFrame.fieldOutputs['COORD']
@@ -126,22 +125,65 @@ def getResults2(ModelName):
 	dFieldpTip2 = dispField2.getSubset(region=pTip)
 	print 'Retrieving only U2 at TIPNODE'
 	#Note, U1=data[0], U2=data[1], U3=data[2]
-	nnodes=len(dFieldpTip.values)
-	for i in range(nnodes):
-		disppTip[i][0] = dFieldpTip.values[i].data[0]
-		disppTip[i][1] = dFieldpTip.values[i].data[1]
-		disppTip[i][2] = dFieldpTip.values[i].data[2]			
-		disppTip2[i][0] = dFieldpTip2.values[i].data[0]
-		disppTip2[i][1] = dFieldpTip2.values[i].data[1]
-		disppTip2[i][2] = dFieldpTip2.values[i].data[2]
+
+	for i in range(31):
+		disppTip[i] = dFieldpTip.values[i].data[0]
+		disppTip[i+31] = dFieldpTip.values[i].data[2]			
+		disppTip2[i] = dFieldpTip2.values[i].data[0]
+		disppTip2[i+31] = dFieldpTip2.values[i].data[2]	
 		#The following is left for use in later probems/projects
+	print 'Scanning the PART for maximum VM STRESS'
+	elsetName='ALL_PART'
+	elset = elemset = None
+	region = "over the entire model"
+	assembly = odb.rootAssembly
+
+	#Check to see if the element set exists
+	#in the assembly
+
+	if elsetName:
+	   try:
+		   elemset = assembly.elementSets[elsetName]
+		   region = " in the element set : " + elsetName;
+	   except KeyError:
+		   print 'An assembly level elset named %s does' \
+				  'not exist in the output database %s' \
+				  % (elsetName, odbName)
+		   odb.close()
+		   exit(0)
+		   
+	""" Initialize maximum values """
+	maxMises = -0.1
+	maxVMElem = 0
+	maxStep = "_None_"
+	maxFrame = -1
+	Stress = 'S'
+	isStressPresent = 0
+	for step in odb.steps.values():
+	   print 'Processing Step:', step.name
+	   for frame in step.frames:
+		   allFields = frame.fieldOutputs
+		   if (allFields.has_key(Stress)):
+			   isStressPresent = 1
+			   stressSet = allFields[Stress]
+			   if elemset:
+				   stressSet = stressSet.getSubset(
+					   region=elemset)      
+			   for stressValue in stressSet.values:                
+				   if (stressValue.mises > maxMises):
+					   maxMises = stressValue.mises
+					   maxVMElem = stressValue.elementLabel
+					   maxStep = step.name
+					   maxFrame = frame.incrementNumber
+	if(isStressPresent):
+	   print 'Maximum von Mises stress %s is %f in element %d'%(
+		   region, maxMises, maxVMElem)
+	   print 'Location: frame # %d  step:  %s '%(maxFrame,maxStep)
+	else:
+	   print 'Stress output is not available in' \
+			 'the output database : %s\n' %(odb.name)     
+#	disppTip[20]=maxMises
 	odb.close()
-	disppTip=np.array(disppTip)
-	disppTip2=np.array(disppTip2)
-	disppTip=disppTip[~np.all(disppTip == 0, axis=1)]
-	disppTip2=disppTip2[~np.all(disppTip2 == 0, axis=1)]
-	np.savetxt("initial.txt", disppTip, delimiter=",")
-	np.savetxt("final.txt", disppTip2, delimiter=",")
 	return disppTip,disppTip2
 	
 def find_strain(JobName, StepName, FOTYPE, SetName = None, object = 'assembly', 

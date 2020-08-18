@@ -5,7 +5,7 @@ from scipy import interpolate
 import matplotlib.pyplot as plt
 import random
 # These are the defined design variables
-DVs=[0 for x in range(5)]
+DVs=[0 for x in range(9)]
 DataFile = open('PostData.txt','w')
 DataFile.write('IRTT	ORTT	T1		T2		T3		G		HNG		phiL	phiR	UX1		UY1		UX2		UY2		UX3		UY3		UX4		UY4		UX5		UY5		UX6		UY6		UX7		UY7		UX8		UY8		UX9		UY9		UX10		UY10		MaxVM\n')
 DataFile.close()
@@ -23,11 +23,11 @@ x1=[0 for x in range(12)]
 z1=[0 for x in range(12)]
 # Var number (nV dimension) setpoint
 # You can change the dimension's size
-nV = 3
+nV = 9
 
 # Sample number setpoint
 # You can change the Sample number
-nS = =500
+nS = 600
 
 # Initialisation:
 k=1
@@ -58,15 +58,27 @@ for key in DOE_Inputs:
 	T2=round(T2, 2)
 	T3=(DOE_Inputs[key][2])*0.4
 	T3=round(T3, 2)
-	# ORTT=(DOE_Inputs[key][3])*20+10
-	# ORTT=round(ORTT, 0)
-	# t=(DOE_Inputs[key][4])*0.65*ORTT+0.25*ORTT
-	# t=round(t, 0)
+	ORTT=(DOE_Inputs[key][3])*0.2+0.1
+	ORTT=round(ORTT, 1)
+	t=(DOE_Inputs[key][4])*0.8*ORTT+0.1*ORTT
+	t=round(t, 2)
+	G=(DOE_Inputs[key][5])*0.3+0.2
+	G=round(G, 1)
+	HNG=(DOE_Inputs[key][6])*0.3+0.2
+	HNG=round(HNG, 1)
+	phiL=(DOE_Inputs[key][7])*0.2+0.1
+	phiL=round(phiL, 2)	
+	phiR=(DOE_Inputs[key][8])*0.2+0.1
+	phiR=round(phiR, 2)	
 	DVs[0]=T1
 	DVs[1]=T2
 	DVs[2]=T3
-	# DVs[3]=ORTT/1000
-	# DVs[4]=(ORTT-t)/1000
+	DVs[3]=ORTT/10
+	DVs[4]=round(((ORTT-t)/10),3)
+	DVs[5]=G/10
+	DVs[6]=HNG/10
+	DVs[7]=phiL
+	DVs[8]=phiR
 	print 'inputs in optimization code: ', DVs
 	# This creates the input txt file for the Abaqus script
 	fileobject = open('input.txt','wb')

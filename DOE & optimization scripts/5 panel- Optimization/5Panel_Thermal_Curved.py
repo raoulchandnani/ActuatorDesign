@@ -1,3 +1,9 @@
+# read the files in the input file
+fileobject = open('input.txt','rb')
+DVs = []
+for line in fileobject:
+	DVs.append(float(line))
+fileobject.close()
 from abaqus import *
 from abaqusConstants import *
 import __main__
@@ -19,59 +25,74 @@ import xyPlot
 import connectorBehavior
 import displayGroupOdbToolset as dgo
 from math import atan, sin, cos, tan
+from math import atan, sin, cos, tan,atan2,pi
+import numpy as np
 from Post_P_Script import getResults,getResults2,find_strain,find_stress
 ##########################
 
 # Variables for Plates & Assembly
 H=0.55; # Horizontal plate length 
-V=0.300; # Vertical plate length
+V=0.055; # Vertical plate length
 G=0.025/4;   # Gap length
 HNG=-0.030/4; # Hinge height
 D=0.015/4; #Hinge distance from edge
 elast_thk=-0.005*6
 Total = 0.28
 Pad=0.01
+
 ##Angles
 phiL2=16.3; 
 phiR2=16.3;
 phiL=3.15;
 phiR=3.15;
 phiM=0;
-
 Case=2
 Configuration=2
+
+# Variables for Elastomer
+with open("Aero_Data_I.txt", "r") as a:
+    Datalow= [[float(num) for num in line.split(' ')] for line in a]
+Datalow=np.array(Datalow) 
+start=83
+end=86
+Elastfull=0
+
 # Variables for TT
 T1=1.2
 T2=0.1
 T3=1.2
-ORTT=0.020/4
-IRTT=0.010/4
+ORTT=0.014
+IRTT=0.007
 
-theta=asin((sin(phiR2)-sin(phiL2))/3)
-Hnet=(Total)/(3*cos(theta)+cos(phiL2)+cos(phiR2));
-H=Hnet-G;
-# H1=1.0-G
-# H2=0.6-G
-# H3=0.15-G
-# H4=0.5-G
-# H5=0.75-G
-Hnet=(Total)/(2*cos(phiL2*pi/180)+2*cos(phiL*pi/180)+1);
-H=Hnet-G;
-# H1=(0.1524-G)
-# H2=(0.1524-G)
-# H3=(0.1524-G)
-# H4=(0.1524-G)
-# H5=(0.1524-G)
-H1=H
-H2=H
-H3=H
-H4=H
-H5=H
+# Variables for Plates & Assembly
+T1=DVs[0]
+T3=DVs[0]
+G=DVs[1]
+HNG=DVs[2]
+phiL2=DVs[3]
+phiL=DVs[4]
+H1net=DVs[5]
+H2net=DVs[6]
+phiR2=DVs[3]
+phiR=DVs[4]
+min_thk=DVs[7]
+D=0.0025
+# H3net=2*H1net*cos(phiL2*pi/180)+2*H2net*cos(phiL*pi/180)-Total
+# H1=H1net-G;
+# H2=H2net-G;
+# H3=H3net-G;
+# H4=H2
+# H5=H1
+
+
+H3net=Total-2*H1net*cos(phiL2*pi/180)-2*H2net*cos(phiL*pi/180)
+H1=H1net-G;
+H2=H2net-G;
+H3=H3net-G;
+H4=H2
+H5=H1
 seedsize=G/4
-# T1=0.72
-# T2=0.72
-# T3=0.05
-test=1
+test=0
 ##########################
 
 
@@ -162,7 +183,11 @@ for plate_num in [1,2,3,4,5]:
 	s.unsetPrimaryObject()
 	p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
 	del mdb.models['Model-1'].sketches['__profile__']
-
+	p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
+	s = p.faces
+	side1Faces = s.findAt(((0, 0, 0.0), ))
+	p.Surface(side2Faces=side1Faces, name='Surf-Bottom')
+	
 	#Defining the face partitions
 	print 'Partitioning part'
 	p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
@@ -188,12 +213,6 @@ for plate_num in [1,2,3,4,5]:
 		faces=pickedFaces, sketch=s)
 	s.unsetPrimaryObject()
 	del mdb.models['Model-1'].sketches['__profile__']
-	p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
-	s = p.faces
-	side1Faces = s.findAt(((0, 0, 0.0), ))
-	# side1Faces = s.findAt(((0, 0, 0.0), ), (((0.5*H-0.5*D), 0.25*V, 0.0), ), (((0.5*H-0.5*D), -0.25*V, 0.0), ), ((
-		# -(0.5*H-0.5*D), 0.25*V, 0.0), ), ((-(0.5*H-0.5*D), -0.25*V, 0.0), ))
-	p.Surface(side2Faces=side1Faces, name='Surf-Bottom')
 
 	###Datum Points
 	p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
@@ -470,132 +489,344 @@ RP=a.ReferencePoint(point=(DVct[0],DVct[1], DVct[2]))
 RP25=RP.id
 
 ## Create Elastomer
-Elastx=[-1.23833561e-01, -1.16606322e-01, -1.09257918e-01, -1.01802198e-01,
-       -9.42530342e-02, -8.66244955e-02, -7.89305807e-02, -7.11839983e-02,
-       -6.33916999e-02, -5.55583894e-02, -4.76888231e-02, -3.97879087e-02,
-       -3.18609776e-02, -2.39134775e-02, -1.59507612e-02, -7.97791345e-03,
-        2.43259406e-16,  7.97791345e-03,  1.59507612e-02,  2.39134775e-02,
-        3.18609776e-02,  3.97879087e-02,  4.76888231e-02,  5.55583894e-02,
-        6.33916999e-02,  7.11839983e-02,  7.89305807e-02,  8.66244955e-02,
-        9.42530342e-02,  1.01802198e-01,  1.09257918e-01,  1.16606322e-01,
-        1.23833561e-01]
 
-Elasty= [-0.60615429, -0.60648895, -0.60573623, -0.604257  , -0.60241338,
-       -0.60056739, -0.59908303, -0.59828414, -0.59816924, -0.59860119,
-       -0.59944193, -0.60054961, -0.60177697, -0.6029776 , -0.60400868,
-       -0.60473005, -0.60500163, -0.60473005, -0.60400868, -0.6029776 ,
-       -0.60177697, -0.60054961, -0.59944193, -0.59860119, -0.59816924,
-       -0.59828414, -0.59908303, -0.60056739, -0.60241338, -0.604257  ,
-       -0.60573623, -0.60648895, -0.60615429]
-for i in range(len(Elasty)):
-	Elasty[i]=-Elasty[i]	
-DVct2=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP8].pointOn
-endy=Elasty[0]-DVct2[2]+elast_thk
-for i in range(len(Elasty)):
-	Elasty[i]=Elasty[i]-endy
-	
+Presloc=[0,0,0]
 s = mdb.models['Model-1'].ConstrainedSketch(name='__profile__', 
-    sheetSize=200.0)
+	sheetSize=200.0)
 g, v, d, c = s.geometry, s.vertices, s.dimensions, s.constraints
 s.setPrimaryObject(option=STANDALONE)
-
-DVct=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP12].pointOn
-DVct2=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP8].pointOn
-s.Line(point1=(DVct[0]-Pad, DVct2[2]), point2=(DVct2[0], DVct2[2]))
-DVct=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP5].pointOn
-s.Line(point1=(DVct2[0], DVct2[2]), point2=(DVct[0], DVct[2]))
-DVct2=mdb.models['Model-1'].rootAssembly.instances['Left_Plate'].datums[DP8].pointOn
-s.Line(point1=(DVct[0], DVct[2]), point2=(DVct2[0], DVct2[2]))
-DVct=mdb.models['Model-1'].rootAssembly.instances['Left_Plate'].datums[DP5].pointOn
-s.Line(point1=(DVct2[0], DVct2[2]), point2=(DVct[0], DVct[2]))
-DVct2=mdb.models['Model-1'].rootAssembly.instances['Middle_Plate'].datums[DP8].pointOn
-s.Line(point1=(DVct[0], DVct[2]), point2=(DVct2[0], DVct2[2]))
-DVct=mdb.models['Model-1'].rootAssembly.instances['Middle_Plate'].datums[DP5].pointOn
-s.Line(point1=(DVct2[0], DVct2[2]), point2=(DVct[0], DVct[2]))
-DVct2=mdb.models['Model-1'].rootAssembly.instances['Right_Plate'].datums[DP8].pointOn
-s.Line(point1=(DVct[0], DVct[2]), point2=(DVct2[0], DVct2[2]))
-DVct=mdb.models['Model-1'].rootAssembly.instances['Right_Plate'].datums[DP5].pointOn
-s.Line(point1=(DVct2[0], DVct2[2]), point2=(DVct[0], DVct[2]))
-DVct2=mdb.models['Model-1'].rootAssembly.instances['Right_Plate_2'].datums[DP8].pointOn
-s.Line(point1=(DVct[0], DVct[2]), point2=(DVct2[0], DVct2[2]))
-DVct=mdb.models['Model-1'].rootAssembly.instances['Right_Plate_2'].datums[DP5].pointOn
-s.Line(point1=(DVct2[0], DVct2[2]), point2=(DVct[0], DVct[2]))
-DVct2=mdb.models['Model-1'].rootAssembly.instances['Right_Plate_2'].datums[DP9].pointOn
-DVct2=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP8].pointOn
-DVct3=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP12].pointOn
-s.Line(point1=(DVct[0], DVct[2]), point2=(-DVct3[0]+Pad, DVct2[2]))
-#s.Line(point1=(DVct[0], DVct[2]), point2=(-DVct3[0], DVct2[2]))
-s.Line(point1=(DVct3[0]-Pad, DVct2[2]), point2=(Elastx[0]-Pad, Elasty[0]))
-s.Line(point1=(-DVct3[0]+Pad, DVct2[2]), point2=(Elastx[-1]+Pad, Elasty[-1]))
-s.Line(point1=(Elastx[0], Elasty[0]), point2=(Elastx[0]-Pad, Elasty[0]))
-s.Line(point1=(Elastx[-1], Elasty[-1]), point2=(Elastx[-1]+Pad, Elasty[-1]))
-# DVct4=mdb.models['Model-1'].rootAssembly.instances['Middle_Plate'].datums[DP8].pointOn
-# s.Line(point1=(-DVct3[0], DVct2[2]), point2=(-DVct3[0], DVct4[2]-elast_thk))
-# s.Line(point1=(-DVct3[0], DVct4[2]-elast_thk), point2=(DVct3[0], DVct4[2]-elast_thk))
-# s.Line(point1=(DVct3[0], DVct4[2]-elast_thk), point2=(DVct3[0], DVct2[2]))
-
-for i in range(len(Elasty)-1):
-	s.Spline(points=((Elastx[i], Elasty[i]), (Elastx[i+1], Elasty[i+1])))
-
 p = mdb.models['Model-1'].Part(name='Elastomer', dimensionality=THREE_D, 
-    type=DEFORMABLE_BODY)
-p = mdb.models['Model-1'].parts['Elastomer']
-p.BaseSolidExtrude(sketch=s, depth=V)
-s.unsetPrimaryObject()
-del mdb.models['Model-1'].sketches['__profile__']
+	type=DEFORMABLE_BODY)
+d2 = p.datums
+Pathloc=(0,0,0,0,0,0)
+Setloc=np.zeros((5,3))
+SetlocL=np.zeros((5,3))
+SetlocT=np.zeros((5,3))
+Curveloc=np.zeros((1,3))
+Datamin=np.zeros(100)
+for xloc in range(0,100):
+	XLOC=11.85+0.0315*xloc
+	count=0
+	Dataxloc=[[0.000000 for x in range(7)] for y in range(len(Datalow))]
+	Dataxloc=np.array(Dataxloc)
+	for i in range(len(Datalow)):
+		if abs(Datalow[i,0]-XLOC)<1E-06:
+			Dataxloc[count]=Datalow[i]
+			count=count+1
+	Dataxloc=Dataxloc[~np.all(Dataxloc == 0, axis=1)]
+	Datamin[xloc]=(min(-Dataxloc[:,2])-(0.0315*xloc)*tan(6.841917290255273E-02))
+lowest=min(Datamin)
+	
+for xloc in range(start,end):
+	if xloc>0:
+		DP=p.DatumPlaneByPrincipalPlane(principalPlane=XYPLANE, offset=0.0315*xloc)
+		DPP=DP.id
+		p = mdb.models['Model-1'].parts['Elastomer']
+		DP=p.DatumAxisByTwoPoint(point1=(Datalow[-1,1],Datalow[0,2]-0.0315*xloc,0.0315*xloc), point2=(Datalow[-1,1],Datalow[0,2]+0.0315*xloc,0.0315*xloc))
+		DPE=DP.id
+		t = p.MakeSketchTransform(sketchPlane=d2[DPP], sketchUpEdge=d2[DPE], 
+			sketchPlaneSide=SIDE1, sketchOrientation=RIGHT, origin=(0, 
+			0, 0.0315*xloc))
+		s = mdb.models['Model-1'].ConstrainedSketch(name='__profile__', 
+			sheetSize=198.85, gridSpacing=4.97, transform=t)
+		g, v, d, c = s.geometry, s.vertices, s.dimensions, s.constraints
+		s.setPrimaryObject(option=SUPERIMPOSE)
+		p.projectReferencesOntoSketch(sketch=s, filter=COPLANAR_EDGES)
+	XLOC=11.85+0.0315*xloc
+	count=0
+	Dataxloc=[[0.000000 for x in range(7)] for y in range(len(Datalow))]
+	Dataxloc=np.array(Dataxloc)
+	for i in range(len(Datalow)):
+		if abs(Datalow[i,0]-XLOC)<1E-06:
+			Dataxloc[count]=Datalow[i]
+			count=count+1
+	Dataxloc=Dataxloc[~np.all(Dataxloc == 0, axis=1)]
+	DVct2=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP13].pointOn
+	Pad_thk=(0.0315*xloc)*tan(6.841917290255273E-02)+lowest-DVct2[2]-min_thk
+	j=0
+	if xloc==start:	
+		for i in range(len(Dataxloc)):
+			Curveloc=np.vstack((Curveloc,[Dataxloc[i,1],-(Dataxloc[i,2]),0.0315*xloc]))
+		Curveloc=Curveloc[~np.all(Curveloc == 0, axis=1)]
+		Desireloc=Dataxloc
+	if xloc==(start+end)/2:
+		for i in range(len(Dataxloc)-1):
+			Presloc=np.vstack((Presloc,[0.7*(Dataxloc[i,1])+0.3*(Dataxloc[i+1,1]),0.7*(-(Dataxloc[i,2]))-0.3*(Dataxloc[i+1,2]),0.0315*xloc]))
+			Presloc=np.vstack((Presloc,[0.3*(Dataxloc[i,1])+0.7*(Dataxloc[i+1,1]),0.3*(-(Dataxloc[i,2]))-0.7*(Dataxloc[i+1,2]),0.0315*xloc]))
+			s.Line(point1=(Dataxloc[i,1], -(Dataxloc[i,2])), point2=(Dataxloc[i+1,1], -(Dataxloc[i+1,2])))				
+	else:		
+		for i in range(len(Dataxloc)-1):
+			s.Spline(points=((Dataxloc[i,1], -(Dataxloc[i,2])), (Dataxloc[i+1,1], -(Dataxloc[i+1,2]))))				
+	DVct=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP12].pointOn
+	DVct2=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP8].pointOn
+	s.Line(point1=(DVct[0]-Pad, DVct2[2]+Pad_thk), point2=(Dataxloc[0,1], -(Dataxloc[0,2])))
+#	s.Line(point1=(DVct[0]-Pad, DVct2[2]+Pad_thk), point2=(DVct[0]-Pad, -(Dataxloc[0,2])))
+	s.Line(point1=(DVct[0]-Pad, DVct2[2]+Pad_thk), point2=(DVct2[0], DVct2[2]+Pad_thk))
+	if xloc==start or xloc==end-1:
+		Path=(11.85+xloc*0.0315,DVct[0]-Pad, DVct2[2]+Pad_thk)
+	DVct=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP5].pointOn
+	s.Line(point1=(DVct2[0], DVct2[2]+Pad_thk), point2=(DVct[0], DVct[2]+Pad_thk))
+	if xloc==start+1:
+		SetlocT[0]=(0.0315*xloc,0.5*(DVct[0]+DVct2[0]),0.5*(DVct[2]+DVct2[2])+Pad_thk)
+	if xloc==end-2:
+		SetlocL[0]=(0.0315*xloc,0.5*(DVct[0]+DVct2[0]),0.5*(DVct[2]+DVct2[2])+Pad_thk)		
+	if xloc==(start+end)/2:
+		Setloc[0]=(0.0315*xloc,0.5*(DVct[0]+DVct2[0]),0.5*(DVct[2]+DVct2[2])+Pad_thk)
+	DVct2=mdb.models['Model-1'].rootAssembly.instances['Left_Plate'].datums[DP8].pointOn
+	s.Line(point1=(DVct[0], DVct[2]+Pad_thk), point2=(DVct2[0], DVct2[2]+Pad_thk))
+	DVct=mdb.models['Model-1'].rootAssembly.instances['Left_Plate'].datums[DP5].pointOn
+	s.Line(point1=(DVct2[0], DVct2[2]+Pad_thk), point2=(DVct[0], DVct[2]+Pad_thk))
+	if xloc==start+1:
+		SetlocT[1]=(0.0315*xloc,0.5*(DVct[0]+DVct2[0]),0.5*(DVct[2]+DVct2[2])+Pad_thk)
+	if xloc==end-2:
+		SetlocL[1]=(0.0315*xloc,0.5*(DVct[0]+DVct2[0]),0.5*(DVct[2]+DVct2[2])+Pad_thk)		
+	if xloc==(start+end)/2:
+		Setloc[1]=(0.0315*xloc,0.5*(DVct[0]+DVct2[0]),0.5*(DVct[2]+DVct2[2])+Pad_thk)
+	DVct2=mdb.models['Model-1'].rootAssembly.instances['Middle_Plate'].datums[DP8].pointOn
+	s.Line(point1=(DVct[0], DVct[2]+Pad_thk), point2=(DVct2[0], DVct2[2]+Pad_thk))
+	DVct=mdb.models['Model-1'].rootAssembly.instances['Middle_Plate'].datums[DP5].pointOn
+	s.Line(point1=(DVct2[0], DVct2[2]+Pad_thk), point2=(DVct[0], DVct[2]+Pad_thk))
+	if xloc==start+1:
+		SetlocT[2]=(0.0315*xloc,0.5*(DVct[0]+DVct2[0]),0.5*(DVct[2]+DVct2[2])+Pad_thk)
+	if xloc==end-2:
+		SetlocL[2]=(0.0315*xloc,0.5*(DVct[0]+DVct2[0]),0.5*(DVct[2]+DVct2[2])+Pad_thk)		
+	if xloc==(start+end)/2:
+		Setloc[2]=(0.0315*xloc,0.5*(DVct[0]+DVct2[0]),0.5*(DVct[2]+DVct2[2])+Pad_thk)			
+	if xloc==start:
+		Axis_start=(DVct2[0], DVct2[2]+Pad_thk,0.0315*xloc)
+		Axis_end=(DVct[0], DVct[2]+Pad_thk,0.0315*xloc)
+		Axis_1_avg=(0.5*(DVct[0]+DVct2[0]), 0.5*(DVct[2]+DVct2[2])+Pad_thk,0.0315*xloc)
+	if xloc==end-1:
+		Axis_2_avg=(0.5*(DVct[0]+DVct2[0]), 0.5*(DVct[2]+DVct2[2])+Pad_thk,0.0315*xloc)
+	DVct2=mdb.models['Model-1'].rootAssembly.instances['Right_Plate'].datums[DP8].pointOn
+	s.Line(point1=(DVct[0], DVct[2]+Pad_thk), point2=(DVct2[0], DVct2[2]+Pad_thk))
+	DVct=mdb.models['Model-1'].rootAssembly.instances['Right_Plate'].datums[DP5].pointOn
+	s.Line(point1=(DVct2[0], DVct2[2]+Pad_thk), point2=(DVct[0], DVct[2]+Pad_thk))
+	if xloc==start+1:
+		SetlocT[3]=(0.0315*xloc,0.5*(DVct[0]+DVct2[0]),0.5*(DVct[2]+DVct2[2])+Pad_thk)
+	if xloc==end-2:
+		SetlocL[3]=(0.0315*xloc,0.5*(DVct[0]+DVct2[0]),0.5*(DVct[2]+DVct2[2])+Pad_thk)		
+	if xloc==(start+end)/2:
+		Setloc[3]=(0.0315*xloc,0.5*(DVct[0]+DVct2[0]),0.5*(DVct[2]+DVct2[2])+Pad_thk)
+	DVct2=mdb.models['Model-1'].rootAssembly.instances['Right_Plate_2'].datums[DP8].pointOn
+	s.Line(point1=(DVct[0], DVct[2]+Pad_thk), point2=(DVct2[0], DVct2[2]+Pad_thk))
+	DVct=mdb.models['Model-1'].rootAssembly.instances['Right_Plate_2'].datums[DP5].pointOn
+	s.Line(point1=(DVct2[0], DVct2[2]+Pad_thk), point2=(DVct[0], DVct[2]+Pad_thk))
+	if xloc==start+1:
+		SetlocT[4]=(0.0315*xloc,0.5*(DVct[0]+DVct2[0]),0.5*(DVct[2]+DVct2[2])+Pad_thk)
+	if xloc==end-2:
+		SetlocL[4]=(0.0315*xloc,0.5*(DVct[0]+DVct2[0]),0.5*(DVct[2]+DVct2[2])+Pad_thk)		
+	if xloc==(start+end)/2:
+		Setloc[4]=(0.0315*xloc,0.5*(DVct[0]+DVct2[0]),0.5*(DVct[2]+DVct2[2])+Pad_thk)
+	DVct2=mdb.models['Model-1'].rootAssembly.instances['Right_Plate_2'].datums[DP9].pointOn
+	DVct2=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP8].pointOn
+	DVct3=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP12].pointOn
+	s.Line(point1=(DVct[0], DVct[2]+Pad_thk), point2=(-DVct3[0]+Pad, DVct2[2]+Pad_thk))
+	s.Line(point1=(Dataxloc[-1,1], -(Dataxloc[-1,2])), point2=(-DVct3[0]+Pad, DVct2[2]+Pad_thk))
+	if xloc==(start+end)/2:
+		DVct1=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP13].pointOn
+		DVct2=mdb.models['Model-1'].rootAssembly.instances['Left_Plate'].datums[DP13].pointOn
+		DVct3=mdb.models['Model-1'].rootAssembly.instances['Middle_Plate'].datums[DP13].pointOn
+		DVct4=mdb.models['Model-1'].rootAssembly.instances['Right_Plate'].datums[DP13].pointOn
+		DVct5=mdb.models['Model-1'].rootAssembly.instances['Right_Plate_2'].datums[DP13].pointOn
+		A=[[DVct1[0],DVct1[2]+Pad_thk,0.0315*xloc],[DVct2[0],DVct2[2]+Pad_thk,0.0315*xloc],[DVct3[0],DVct3[2]+Pad_thk,0.0315*xloc],[DVct4[0],DVct4[2]+Pad_thk,0.0315*xloc],[DVct5[0],DVct5[2]+Pad_thk,0.0315*xloc]]
+	if xloc==start or xloc==end-1:
+		Path=np.hstack((Path,(11.85+xloc*0.0315,-DVct3[0]+Pad, DVct2[2]+Pad_thk)))
+		Pathloc=np.vstack((Pathloc,Path))
+	p = mdb.models['Model-1'].parts['Elastomer']
+	if xloc==0:
+		p.BaseWire(sketch=s)
+	else:
+		p.Wire(sketchPlane=d2[DPP], sketchUpEdge=d2[DPE], sketchPlaneSide=SIDE1, 
+			sketchOrientation=RIGHT, sketch=s)
+	s.unsetPrimaryObject()
+	p = mdb.models['Model-1'].parts['Elastomer']
+	del mdb.models['Model-1'].sketches['__profile__']
+	p = mdb.models['Model-1'].parts['Elastomer']
+	p = mdb.models['Model-1'].parts['Elastomer']
+	e = p.edges
+	edges = e.getByBoundingBox(-1000000,-1000000,0.0315*xloc-0.0001,1000000,1000000,0.0315*xloc+0.0001)
+	p.Set(edges=edges, name='E%i'%xloc)
 
+if Elastfull==1:
+	for i in range(29):
+		Pathh=[0,0,0]
+		for j in range(i+1,len(Datalow),31):
+			Pathh=np.vstack((Pathh,Datalow[j,0:3]))
+		Pathh=Pathh[~np.all(Pathh == 0, axis=1)]
+		print(Pathh[0,1])
+		p.Set(edges=e.getByBoundingBox(Pathh[0,1],0,0,Pathh[0,1],100,4), name='PathWire%i'%i)
+		DP=p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=Pathh[0,1])
+		DPP=DP.id
+		p = mdb.models['Model-1'].parts['Elastomer']
+		d2 = p.datums
+		DP=p.DatumAxisByTwoPoint(point1=(Datalow[-1,0],0,0), point2=(Datalow[-1,0],10,0))
+		DPE=DP.id
+		t = p.MakeSketchTransform(sketchPlane=d2[DPP], sketchUpEdge=d2[DPE], 
+			sketchPlaneSide=SIDE1, sketchOrientation=RIGHT, origin=(0, 
+			0, 0))
+		s = mdb.models['Model-1'].ConstrainedSketch(name='__profile__', 
+			sheetSize=198.85, gridSpacing=4.97, transform=t)
+		g, v, d, c = s.geometry, s.vertices, s.dimensions, s.constraints
+		s.setPrimaryObject(option=SUPERIMPOSE)
+		p.projectReferencesOntoSketch(sketch=s, filter=COPLANAR_EDGES)
+		# for k in range(len(Pathh)-1):
+			# s.Spline(points=((-0.0315*(start+k), -Pathh[k,2]), (-0.0315*(start+k+1), -Pathh[k+1,2])))
+		s.Spline(points=[(-0.0315*(start+k), -Pathh[k,2]) for k in range(len(Pathh))])
+		W=p.Wire(sketchPlane=d2[DPP], sketchUpEdge=d2[DPE], sketchPlaneSide=SIDE1, 
+			sketchOrientation=RIGHT, sketch=s)
+		s.unsetPrimaryObject()
+		p.Set(edges=e.getByBoundingBox(Pathh[0,1],0,0,Pathh[0,1],100,4), name='PathWire%i'%i)
+
+DP=p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=-0.15)
+DPP=DP.id
+p = mdb.models['Model-1'].parts['Elastomer']
+d2 = p.datums
+DP=p.DatumAxisByTwoPoint(point1=(Datalow[-1,0],0,0), point2=(Datalow[-1,0],10,0))
+DPE=DP.id
+t = p.MakeSketchTransform(sketchPlane=d2[DPP], sketchUpEdge=d2[DPE], 
+	sketchPlaneSide=SIDE1, sketchOrientation=RIGHT, origin=(0, 
+	0, 0))
+s = mdb.models['Model-1'].ConstrainedSketch(name='__profile__', 
+	sheetSize=198.85, gridSpacing=4.97, transform=t)
+g, v, d, c = s.geometry, s.vertices, s.dimensions, s.constraints
+s.setPrimaryObject(option=SUPERIMPOSE)
+p.projectReferencesOntoSketch(sketch=s, filter=COPLANAR_EDGES)
+s.Line(point1=(-(Pathloc[1,0]-11.85), Pathloc[1,2]), point2=(-(Pathloc[2,0]-11.85), Pathloc[2,2]))
+W=p.Wire(sketchPlane=d2[DPP], sketchUpEdge=d2[DPE], sketchPlaneSide=SIDE1, 
+	sketchOrientation=RIGHT, sketch=s)
+s.unsetPrimaryObject()
+p.Set(edges=[e.findAt(((Pathloc[1,1], Pathloc[1,2]+0.0315*(loca-0.5)*tan(6.841917290255273E-02), Pathloc[1,0]-11.85+0.0315*(loca-0.5)), ),  ) for loca in range(1,end-start)], name='PathWireL')
+
+DP=p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=0.15)
+DPP=DP.id
+p = mdb.models['Model-1'].parts['Elastomer']
+p.featuresById[W.id]
+d2 = p.datums
+DP=p.DatumAxisByTwoPoint(point1=(Datalow[-1,0],0,0), point2=(Datalow[-1,0],10,0))
+DPE=DP.id
+t = p.MakeSketchTransform(sketchPlane=d2[DPP], sketchUpEdge=d2[DPE], 
+	sketchPlaneSide=SIDE1, sketchOrientation=RIGHT, origin=(0, 
+	0, 0))
+s = mdb.models['Model-1'].ConstrainedSketch(name='__profile__', 
+	sheetSize=198.85, gridSpacing=4.97, transform=t)
+g, v, d, c = s.geometry, s.vertices, s.dimensions, s.constraints
+s.setPrimaryObject(option=SUPERIMPOSE)
+p.projectReferencesOntoSketch(sketch=s, filter=COPLANAR_EDGES)
+s.Line(point1=(-(Pathloc[1,3]-11.85), Pathloc[1,5]), point2=(-(Pathloc[2,3]-11.85), Pathloc[2,5]))
+W=p.Wire(sketchPlane=d2[DPP], sketchUpEdge=d2[DPE], sketchPlaneSide=SIDE1, 
+	sketchOrientation=RIGHT, sketch=s)
+s.unsetPrimaryObject()
+p.Set(edges=[e.findAt(((Pathloc[1,4], Pathloc[1,5]+0.0315*(loca-0.5)*tan(6.841917290255273E-02), Pathloc[1,3]-11.85+0.0315*(loca-0.5)), ),  ) for loca in range(1,end-start)], name='PathWireR')
+
+if Elastfull==1:
+	p.SolidLoft(loftsections=[p.sets['E%i'%xloc].edges[:] for xloc in range(start,end)],paths=[p.sets['PathWire%i'%locc].edges[:] for locc in range(29)],globalSmoothing=ON)
+else:
+	p.SolidLoft(loftsections=[p.sets['E%i'%xloc].edges[:] for xloc in range(start,end)],paths=(p.sets['PathWireL'].edges[:],p.sets['PathWireR'].edges[:],),globalSmoothing=ON)
+
+v=p.vertices
+p.Set(vertices=[v.findAt(((Curveloc[l,0],Curveloc[l,1],Curveloc[l,2]), ),  ) for l in range(len(Curveloc))], name='CurveTip')
 a = mdb.models['Model-1'].rootAssembly
 a.DatumCsysByDefault(CARTESIAN)
 p = mdb.models['Model-1'].parts['Elastomer']
 a.Instance(name='Elastomer', part=p, dependent=ON)
+v=a.instances['Elastomer'].vertices
+a.Set(vertices=[v.findAt(((Curveloc[l,0],Curveloc[l,1],Curveloc[l,2]), ),  ) for l in range(len(Curveloc))], name='TIPNODE')
 a = mdb.models['Model-1'].rootAssembly
-a.rotate(instanceList=('Elastomer', ), axisPoint=(0,0, 0), 
-	axisDirection=(1, 0, 0.0), angle=(90))	
+a.rotate(instanceList=('Elastomer', ), axisPoint=Axis_start, 
+	axisDirection=(Axis_end[0]-Axis_start[0],0,0), angle=90+6.841917290255273E-02*180/pi)	
+for loc in range(3):
+	Vct[loc]= mdb.models['Model-1'].rootAssembly.instances['Middle_Plate'].datums[DP7].pointOn[loc]-Axis_start[loc]
 a = mdb.models['Model-1'].rootAssembly
-a.translate(instanceList=('Elastomer', ), vector=(0,0.5*V,0))
+a.translate(instanceList=('Elastomer', ), vector=(Vct[0],Vct[1]+0.5*((0.0315*(end-1)-0.0315*start)/cos(6.841917290255273E-02)-V),Vct[2]))
+
 #Defining the face partitions
-
 print 'Partitioning part'
-if (phiL==0) or (phiR==0):
-	DVct=mdb.models['Model-1'].rootAssembly.instances['Left_Plate'].datums[DP13].pointOn
+p = mdb.models['Model-1'].parts['Elastomer']
+f, e, d = p.faces, p.edges, p.datums
+Vct2=[0,0,0]
+for loc in range(3):
+	Vct[loc]= 0.5*(Axis_end[loc]+Axis_start[loc])
+	Vct2[loc]=0.5*(Axis_1_avg[loc]+Axis_2_avg[loc])
+t = p.MakeSketchTransform(sketchPlane=f.findAt(coordinates=A[2]), sketchUpEdge=e.findAt(coordinates=Vct), 
+	sketchPlaneSide=SIDE2, origin=Vct2)
+#	0.0, 0.59661, 2.142
+s = mdb.models['Model-1'].ConstrainedSketch(name='__profile__', sheetSize=6.01, 
+	gridSpacing=0.15, transform=t)
+g, v, d1, c = s.geometry, s.vertices, s.dimensions, s.constraints
+s.setPrimaryObject(option=SUPERIMPOSE)
+p = mdb.models['Model-1'].parts['Elastomer']
+p.projectReferencesOntoSketch(sketch=s, filter=COPLANAR_EDGES)
+s.Line(point1=(0.5*V, 0.15), point2=(0.5*V, -0.15))
+# s.Line(point1=(0.5*V+LD, 0.15), point2=(0.5*V+LD, -0.15))
+# s.Line(point1=(1.5*V+LD, 0.15), point2=(1.5*V+LD, -0.15))
+s.Line(point1=(-0.5*V, 0.15), point2=(-0.5*V, -0.15))
+# s.Line(point1=(-0.5*V-LD, 0.15), point2=(-0.5*V-LD, -0.15))
+# s.Line(point1=(-1.5*V-LD, 0.15), point2=(-1.5*V-LD, -0.15))
+p = mdb.models['Model-1'].parts['Elastomer']
+f = p.faces
+pickedFaces = f.findAt((A[0], ), (A[1], ), (A[2], ), (A[3], ), (A[4], ))
+f1, e1, d2 = p.faces, p.edges, p.datums
+p.PartitionFaceBySketchThruAll(sketchPlane=f1.findAt(coordinates=A[2]), sketchUpEdge=e1.findAt(coordinates=Vct), faces=pickedFaces, sketchPlaneSide=SIDE2, sketch=s)
+s.unsetPrimaryObject()
+del mdb.models['Model-1'].sketches['__profile__']
+for rowname in ['']:
 	p = mdb.models['Model-1'].parts['Elastomer']
-	f = p.faces
-	pickedFaces = f.findAt(((DVct[0],DVct[2], DVct[1]+0.5*V), ))
-	v, e, d = p.vertices, p.edges, p.datums
-	DVct=mdb.models['Model-1'].rootAssembly.instances['Left_Plate'].datums[DP5].pointOn
-	DVct2=mdb.models['Model-1'].rootAssembly.instances['Left_Plate'].datums[DP6].pointOn
-	p.PartitionFaceByShortestPath(point1=v.findAt(coordinates=(DVct[0],DVct[2], DVct[1]+0.5*V)), 
-		point2=v.findAt(coordinates=(DVct2[0],DVct2[2], DVct2[1]+0.5*V)), faces=pickedFaces)
-		
-	DVct=mdb.models['Model-1'].rootAssembly.instances['Middle_Plate'].datums[DP13].pointOn
-	p = mdb.models['Model-1'].parts['Elastomer']
-	f = p.faces
-	pickedFaces = f.findAt(((DVct[0],DVct[2], DVct[1]+0.5*V), ))
-	v, e, d = p.vertices, p.edges, p.datums
-	DVct=mdb.models['Model-1'].rootAssembly.instances['Middle_Plate'].datums[DP8].pointOn
-	DVct2=mdb.models['Model-1'].rootAssembly.instances['Middle_Plate'].datums[DP7].pointOn
-	p.PartitionFaceByShortestPath(point1=v.findAt(coordinates=(DVct[0],DVct[2], DVct[1]+0.5*V)), 
-		point2=v.findAt(coordinates=(DVct2[0],DVct2[2], DVct2[1]+0.5*V)), faces=pickedFaces)
-		
-	DVct=mdb.models['Model-1'].rootAssembly.instances['Middle_Plate'].datums[DP13].pointOn
-	p = mdb.models['Model-1'].parts['Elastomer']
-	f = p.faces
-	pickedFaces = f.findAt(((DVct[0],DVct[2], DVct[1]+0.5*V), ))
-	v, e, d = p.vertices, p.edges, p.datums
-	DVct=mdb.models['Model-1'].rootAssembly.instances['Middle_Plate'].datums[DP5].pointOn
-	DVct2=mdb.models['Model-1'].rootAssembly.instances['Middle_Plate'].datums[DP6].pointOn
-	p.PartitionFaceByShortestPath(point1=v.findAt(coordinates=(DVct[0],DVct[2], DVct[1]+0.5*V)), 
-		point2=v.findAt(coordinates=(DVct2[0],DVct2[2], DVct2[1]+0.5*V)), faces=pickedFaces)
+	s = p.faces 
+	side1Faces = s.findAt(((eval('Setloc%s'%rowname)[0][1], eval('Setloc%s'%rowname)[0][2], eval('Setloc%s'%rowname)[0][0]), ))
+	p.Surface(side1Faces=side1Faces, name='Surf_L2%s'%rowname)
+	side1Faces = s.findAt(((eval('Setloc%s'%rowname)[1][1], eval('Setloc%s'%rowname)[1][2], eval('Setloc%s'%rowname)[1][0]), ))
+	p.Surface(side1Faces=side1Faces, name='Surf_L%s'%rowname)
+	side1Faces = s.findAt(((eval('Setloc%s'%rowname)[2][1], eval('Setloc%s'%rowname)[2][2], eval('Setloc%s'%rowname)[2][0]), ))
+	p.Surface(side1Faces=side1Faces, name='Surf_M%s'%rowname)
+	side1Faces = s.findAt(((eval('Setloc%s'%rowname)[3][1], eval('Setloc%s'%rowname)[3][2], eval('Setloc%s'%rowname)[3][0]), ))
+	p.Surface(side1Faces=side1Faces, name='Surf_R%s'%rowname)
+	side1Faces = s.findAt(((eval('Setloc%s'%rowname)[4][1], eval('Setloc%s'%rowname)[4][2], eval('Setloc%s'%rowname)[4][0]), ))
+	p.Surface(side1Faces=side1Faces, name='Surf_R2%s'%rowname)	
 
-	DVct=mdb.models['Model-1'].rootAssembly.instances['Right_Plate'].datums[DP13].pointOn
-	p = mdb.models['Model-1'].parts['Elastomer']
-	f = p.faces
-	pickedFaces = f.findAt(((DVct[0],DVct[2], DVct[1]+0.5*V), ))
-	v, e, d = p.vertices, p.edges, p.datums
-	DVct=mdb.models['Model-1'].rootAssembly.instances['Right_Plate'].datums[DP8].pointOn
-	DVct2=mdb.models['Model-1'].rootAssembly.instances['Right_Plate'].datums[DP7].pointOn
-	p.PartitionFaceByShortestPath(point1=v.findAt(coordinates=(DVct[0],DVct[2], DVct[1]+0.5*V)), 
-		point2=v.findAt(coordinates=(DVct2[0],DVct2[2], DVct2[1]+0.5*V)), faces=pickedFaces)
+# #Defining the face partitions
+
+# print 'Partitioning part'
+# if (phiL==0) or (phiR==0):
+	# DVct=mdb.models['Model-1'].rootAssembly.instances['Left_Plate'].datums[DP13].pointOn
+	# p = mdb.models['Model-1'].parts['Elastomer']
+	# f = p.faces
+	# pickedFaces = f.findAt(((DVct[0],DVct[2], DVct[1]+0.5*V), ))
+	# v, e, d = p.vertices, p.edges, p.datums
+	# DVct=mdb.models['Model-1'].rootAssembly.instances['Left_Plate'].datums[DP5].pointOn
+	# DVct2=mdb.models['Model-1'].rootAssembly.instances['Left_Plate'].datums[DP6].pointOn
+	# p.PartitionFaceByShortestPath(point1=v.findAt(coordinates=(DVct[0],DVct[2], DVct[1]+0.5*V)), 
+		# point2=v.findAt(coordinates=(DVct2[0],DVct2[2], DVct2[1]+0.5*V)), faces=pickedFaces)
+		
+	# DVct=mdb.models['Model-1'].rootAssembly.instances['Middle_Plate'].datums[DP13].pointOn
+	# p = mdb.models['Model-1'].parts['Elastomer']
+	# f = p.faces
+	# pickedFaces = f.findAt(((DVct[0],DVct[2], DVct[1]+0.5*V), ))
+	# v, e, d = p.vertices, p.edges, p.datums
+	# DVct=mdb.models['Model-1'].rootAssembly.instances['Middle_Plate'].datums[DP8].pointOn
+	# DVct2=mdb.models['Model-1'].rootAssembly.instances['Middle_Plate'].datums[DP7].pointOn
+	# p.PartitionFaceByShortestPath(point1=v.findAt(coordinates=(DVct[0],DVct[2], DVct[1]+0.5*V)), 
+		# point2=v.findAt(coordinates=(DVct2[0],DVct2[2], DVct2[1]+0.5*V)), faces=pickedFaces)
+		
+	# DVct=mdb.models['Model-1'].rootAssembly.instances['Middle_Plate'].datums[DP13].pointOn
+	# p = mdb.models['Model-1'].parts['Elastomer']
+	# f = p.faces
+	# pickedFaces = f.findAt(((DVct[0],DVct[2], DVct[1]+0.5*V), ))
+	# v, e, d = p.vertices, p.edges, p.datums
+	# DVct=mdb.models['Model-1'].rootAssembly.instances['Middle_Plate'].datums[DP5].pointOn
+	# DVct2=mdb.models['Model-1'].rootAssembly.instances['Middle_Plate'].datums[DP6].pointOn
+	# p.PartitionFaceByShortestPath(point1=v.findAt(coordinates=(DVct[0],DVct[2], DVct[1]+0.5*V)), 
+		# point2=v.findAt(coordinates=(DVct2[0],DVct2[2], DVct2[1]+0.5*V)), faces=pickedFaces)
+
+	# DVct=mdb.models['Model-1'].rootAssembly.instances['Right_Plate'].datums[DP13].pointOn
+	# p = mdb.models['Model-1'].parts['Elastomer']
+	# f = p.faces
+	# pickedFaces = f.findAt(((DVct[0],DVct[2], DVct[1]+0.5*V), ))
+	# v, e, d = p.vertices, p.edges, p.datums
+	# DVct=mdb.models['Model-1'].rootAssembly.instances['Right_Plate'].datums[DP8].pointOn
+	# DVct2=mdb.models['Model-1'].rootAssembly.instances['Right_Plate'].datums[DP7].pointOn
+	# p.PartitionFaceByShortestPath(point1=v.findAt(coordinates=(DVct[0],DVct[2], DVct[1]+0.5*V)), 
+		# point2=v.findAt(coordinates=(DVct2[0],DVct2[2], DVct2[1]+0.5*V)), faces=pickedFaces)
 
 
 # Create Material
@@ -1047,7 +1278,7 @@ csa = a.SectionAssignment(sectionName='BEAM', region=region)
 print 'Meshing the Part'
 for plate_num in [1,2,3,4,5]:	
 	p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
-	p.seedPart(size=seedsize, deviationFactor=0.1, minSizeFactor=0.1)		#G/6
+	p.seedPart(size=0.02, deviationFactor=0.1, minSizeFactor=0.1)		#G/6
 	p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
 	p.generateMesh()
 
@@ -1055,7 +1286,7 @@ elemType1 = mesh.ElemType(elemCode=C3D8H, elemLibrary=STANDARD)
 elemType2 = mesh.ElemType(elemCode=C3D6, elemLibrary=STANDARD)
 elemType3 = mesh.ElemType(elemCode=C3D4, elemLibrary=STANDARD)
 p = mdb.models['Model-1'].parts['Elastomer']
-p.seedPart(size=seedsize, deviationFactor=0.1, minSizeFactor=0.1)
+p.seedPart(size=0.01, deviationFactor=0.1, minSizeFactor=0.1)
 p = mdb.models['Model-1'].parts['Elastomer']
 c = p.cells
 cells = c[:]
@@ -1270,99 +1501,53 @@ refPoints1=(r1[RP25], )
 region1=regionToolset.Region(referencePoints=refPoints1)
 mdb.models['Model-1'].RigidBody(name='RB_L_2', refPointRegion=region1, bodyRegion=region2)
 
-for plate_num in [1,2,3,4,5]:
-	p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
-	s = p.elements
-	side2Elements = s[:]
-	p.Surface(side2Elements=side2Elements, name='Surf-Bottom')
+# for plate_num in [1,2,3,4,5]:
+	# p = mdb.models['Model-1'].parts['Plate%i'%plate_num]
+	# s = p.elements
+	# side1Elements = s[:]
+	# p.Surface(side1Elements=side1Elements, name='Surf-Bottom')
 
 
-DVct=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP13].pointOn
-p = mdb.models['Model-1'].parts['Elastomer']
-s = p.faces
-side1Faces = s.findAt(((DVct[0], DVct[2], DVct[1]+0.5*V), ))
-p.Surface(side1Faces=side1Faces, name='Surf_L2')
-DVct=mdb.models['Model-1'].rootAssembly.instances['Left_Plate'].datums[DP13].pointOn
-p = mdb.models['Model-1'].parts['Elastomer']
-s = p.faces
-side1Faces = s.findAt(((DVct[0], DVct[2], DVct[1]+0.5*V), ))
-p.Surface(side1Faces=side1Faces, name='Surf_L')
-DVct=mdb.models['Model-1'].rootAssembly.instances['Middle_Plate'].datums[DP13].pointOn
-p = mdb.models['Model-1'].parts['Elastomer']
-s = p.faces
-side1Faces = s.findAt(((DVct[0], DVct[2], DVct[1]+0.5*V), ))
-p.Surface(side1Faces=side1Faces, name='Surf_M')
-DVct=mdb.models['Model-1'].rootAssembly.instances['Right_Plate'].datums[DP13].pointOn
-p = mdb.models['Model-1'].parts['Elastomer']
-s = p.faces
-side1Faces = s.findAt(((DVct[0], DVct[2], DVct[1]+0.5*V), ))
-p.Surface(side1Faces=side1Faces, name='Surf_R')
-DVct=mdb.models['Model-1'].rootAssembly.instances['Right_Plate_2'].datums[DP13].pointOn
-p = mdb.models['Model-1'].parts['Elastomer']
-s = p.faces
-side1Faces = s.findAt(((DVct[0], DVct[2], DVct[1]+0.5*V), ))
-p.Surface(side1Faces=side1Faces, name='Surf_R2')
+for rowname in ['']:
+	a = mdb.models['Model-1'].rootAssembly
+	p=mdb.models['Model-1'].parts['Elastomer']
+	region1=a.instances['Elastomer'].surfaces['Surf_L2%s'%rowname]
+	a = mdb.models['Model-1'].rootAssembly
+	region2=a.instances['Left_Plate_2%s'%rowname].surfaces['Surf-Bottom']
+	mdb.models['Model-1'].Tie(name='Tie_L2%s'%rowname, master=region2, slave=region1, 
+		positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON)
 
-
-DVct=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP13].pointOn
-a = mdb.models['Model-1'].rootAssembly
-s1 = a.instances['Elastomer'].faces
-side2Faces1 = s1.findAt(((DVct[0],DVct[1],DVct[2]), ))
-#region1=a.Surface(side2Faces=side2Faces1, name='s_Surf-1')
-#region1=a.Set(faces=side2Faces1, name='s_Surf-1')
-region1=a.instances['Elastomer'].surfaces['Surf_L2']
-a = mdb.models['Model-1'].rootAssembly
-region2=a.instances['Left_Plate_2'].surfaces['Surf-Bottom']
-mdb.models['Model-1'].Tie(name='Tie_L2', master=region2, slave=region1, 
-    positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON)
-
-DVct=mdb.models['Model-1'].rootAssembly.instances['Left_Plate'].datums[DP13].pointOn
-a = mdb.models['Model-1'].rootAssembly
-s1 = a.instances['Elastomer'].faces
-side2Faces1 = s1.findAt(((DVct[0],DVct[1],DVct[2]), ))
-#region1=a.Surface(side2Faces=side2Faces1, name='s_Surf-2')
-#region1=a.Set(faces=side2Faces1, name='s_Surf-2')
-region1=a.instances['Elastomer'].surfaces['Surf_L']
-a = mdb.models['Model-1'].rootAssembly
-region2=a.instances['Left_Plate'].surfaces['Surf-Bottom']
-mdb.models['Model-1'].Tie(name='Tie_L', master=region2, slave=region1, 
-    positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON)
-	
-DVct=mdb.models['Model-1'].rootAssembly.instances['Middle_Plate'].datums[DP13].pointOn
-a = mdb.models['Model-1'].rootAssembly
-s1 = a.instances['Elastomer'].faces
-side2Faces1 = s1.findAt(((DVct[0],DVct[1],DVct[2]), ))
-#region1=a.Surface(side2Faces=side2Faces1, name='s_Surf-3')
-#region1=a.Set(faces=side2Faces1, name='s_Surf-3')
-region1=a.instances['Elastomer'].surfaces['Surf_M']
-a = mdb.models['Model-1'].rootAssembly
-region2=a.instances['Middle_Plate'].surfaces['Surf-Bottom']
-mdb.models['Model-1'].Tie(name='Tie_M', master=region2, slave=region1, 
-    positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON)
-	
-DVct=mdb.models['Model-1'].rootAssembly.instances['Right_Plate'].datums[DP13].pointOn
-a = mdb.models['Model-1'].rootAssembly
-s1 = a.instances['Elastomer'].faces
-side2Faces1 = s1.findAt(((DVct[0],DVct[1],DVct[2]), ))
-#region1=a.Surface(side2Faces=side2Faces1, name='s_Surf-4')
-#region1=a.Set(faces=side2Faces1, name='s_Surf-4')
-region1=a.instances['Elastomer'].surfaces['Surf_R']
-a = mdb.models['Model-1'].rootAssembly
-region2=a.instances['Right_Plate'].surfaces['Surf-Bottom']
-mdb.models['Model-1'].Tie(name='Tie_R', master=region2, slave=region1, 
-    positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON)
-	
-DVct=mdb.models['Model-1'].rootAssembly.instances['Right_Plate_2'].datums[DP13].pointOn
-a = mdb.models['Model-1'].rootAssembly
-s1 = a.instances['Elastomer'].faces
-side2Faces1 = s1.findAt(((DVct[0],DVct[1],DVct[2]), ))
-#region1=a.Surface(side2Faces=side2Faces1, name='s_Surf-5')
-#region1=a.Set(faces=side2Faces1, name='s_Surf-5')
-region1=a.instances['Elastomer'].surfaces['Surf_R2']
-a = mdb.models['Model-1'].rootAssembly
-region2=a.instances['Right_Plate_2'].surfaces['Surf-Bottom']
-mdb.models['Model-1'].Tie(name='Tie_R2', master=region2, slave=region1, 
-    positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON)
+	a = mdb.models['Model-1'].rootAssembly
+	p=mdb.models['Model-1'].parts['Elastomer']
+	region1=a.instances['Elastomer'].surfaces['Surf_L%s'%rowname]
+	a = mdb.models['Model-1'].rootAssembly
+	region2=a.instances['Left_Plate%s'%rowname].surfaces['Surf-Bottom']
+	mdb.models['Model-1'].Tie(name='Tie_L%s'%rowname, master=region2, slave=region1, 
+		positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON)
+			
+	a = mdb.models['Model-1'].rootAssembly
+	p=mdb.models['Model-1'].parts['Elastomer']
+	region1=a.instances['Elastomer'].surfaces['Surf_M%s'%rowname]
+	a = mdb.models['Model-1'].rootAssembly
+	region2=a.instances['Middle_Plate%s'%rowname].surfaces['Surf-Bottom']
+	mdb.models['Model-1'].Tie(name='Tie_M%s'%rowname, master=region2, slave=region1, 
+		positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON)
+		
+	a = mdb.models['Model-1'].rootAssembly
+	p=mdb.models['Model-1'].parts['Elastomer']
+	region1=a.instances['Elastomer'].surfaces['Surf_R%s'%rowname]
+	a = mdb.models['Model-1'].rootAssembly
+	region2=a.instances['Right_Plate%s'%rowname].surfaces['Surf-Bottom']
+	mdb.models['Model-1'].Tie(name='Tie_R%s'%rowname, master=region2, slave=region1, 
+		positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON)
+		
+	a = mdb.models['Model-1'].rootAssembly
+	p=mdb.models['Model-1'].parts['Elastomer']
+	region1=a.instances['Elastomer'].surfaces['Surf_R2%s'%rowname]
+	a = mdb.models['Model-1'].rootAssembly
+	region2=a.instances['Right_Plate_2%s'%rowname].surfaces['Surf-Bottom']
+	mdb.models['Model-1'].Tie(name='Tie_R2%s'%rowname, master=region2, slave=region1, 
+		positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON)
 
 #Define Steps
 print 'Defining the Steps'
@@ -1390,9 +1575,9 @@ DVct=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP12].p
 DVct2=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP8].pointOn
 a = mdb.models['Model-1'].rootAssembly
 e1 = a.instances['Elastomer'].faces 
-edges1 = e1.findAt(((DVct[0]-Pad,DVct[1],DVct2[2]-0.5*elast_thk), ))
+edges1 = e1.findAt(((DVct[0]-Pad,DVct[1],DVct2[2]+0.001), ))
 e2 = a.instances['Elastomer'].faces
-edges2 = e1.findAt(((-DVct[0]+Pad,DVct[1],DVct2[2]-0.5*elast_thk), ))
+edges2 = e1.findAt(((-DVct[0]+Pad,DVct[1],DVct2[2]+0.001), ))
 region = a.Set(faces=edges1+edges2, name='Set-43')
 mdb.models['Model-1'].EncastreBC(name='Fix_Elast', createStepName='Initial', 
 	region=region, localCsys=None)
@@ -1486,22 +1671,14 @@ mdb.models['Model-1'].predefinedFields['Predefined Field-3'].setValuesInStep(
 	
 # Pressure Load
 a = mdb.models['Model-1'].rootAssembly
-s1 = a.instances['Elastomer'].faces
-DVct=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP8].pointOn
-DVct2=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP13].pointOn
-DVct3=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP5].pointOn
-DVct4=mdb.models['Model-1'].rootAssembly.instances['Left_Plate'].datums[DP8].pointOn
-DVct5=mdb.models['Model-1'].rootAssembly.instances['Middle_Plate'].datums[DP13].pointOn
-DVct6=mdb.models['Model-1'].rootAssembly.instances['Right_Plate_2'].datums[DP5].pointOn
-DVct7=mdb.models['Model-1'].rootAssembly.instances['Right_Plate_2'].datums[DP13].pointOn
-DVct8=mdb.models['Model-1'].rootAssembly.instances['Right_Plate_2'].datums[DP8].pointOn
-DVct9=mdb.models['Model-1'].rootAssembly.instances['Right_Plate'].datums[DP5].pointOn
-side1Faces1 = s1.findAt(((0.5*(DVct[0]-0.5*Total),0,DVct[2]-elast_thk), ), ((DVct2[0],0,DVct2[2]-elast_thk), ), ((0.5*(DVct3[0]+DVct4[0]),0,0.5*(DVct3[2]+DVct4[2])-elast_thk), ), 
-((DVct5[0],0,DVct5[2]-elast_thk), ), ((0.5*(DVct8[0]+DVct9[0]),0,0.5*(DVct8[2]+DVct9[2])-elast_thk), ), ((DVct7[0],0,DVct7[2]-elast_thk), ), ((0.5*(DVct6[0]+0.5*Total),0,DVct6[2]-elast_thk), ))
-region = a.Surface(side1Faces=side1Faces1, name='Elastomer_Surf')
+p=mdb.models['Model-1'].parts['Elastomer']
+s1 = mdb.models['Model-1'].parts['Elastomer'].faces
+p.Surface(side1Faces=[s1.findAt(((Presloc[i,0],Presloc[i,1],Presloc[i,2]), ),  ) for i in range(len(Presloc))], name='Elastomer_Surf')
+#	side1Faces1 = [s1.findAt(((Presloc[i,0],Presloc[i,1],Presloc[i,2]), ),  ) for i in range(len(Presloc)]
+region = a.instances['Elastomer'].surfaces['Elastomer_Surf']
 mdb.models['Model-1'].Pressure(name='Aero_Pressure', createStepName='RBM', 
-    region=region, distributionType=UNIFORM, field='', magnitude=13750.0, 
-    amplitude=UNSET)
+	region=region, distributionType=UNIFORM, field='', magnitude=13750.0, 
+	amplitude=UNSET)
 	
 #Define Sets
 print 'Defining Sets'
@@ -1527,34 +1704,35 @@ a.Set(elements=elements3, name='TT3_ELEM')
 a.Set(elements=elements4, name='ELAST_ELEM')
 
 a = mdb.models['Model-1'].rootAssembly
-v5 = a.instances['Left_Plate_2'].vertices
-DVct=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP8].pointOn
-DVct2=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP5].pointOn
-verts5 = v5.findAt(((DVct[0], DVct[1],DVct[2]), ), ((DVct2[0], DVct2[1],DVct2[2]), ))
-v1 = a.instances['Left_Plate'].vertices
-DVct=mdb.models['Model-1'].rootAssembly.instances['Left_Plate'].datums[DP8].pointOn
-DVct2=mdb.models['Model-1'].rootAssembly.instances['Left_Plate'].datums[DP5].pointOn
-verts1 = v1.findAt(((DVct[0], DVct[1],DVct[2]), ), ((DVct2[0], DVct2[1],DVct2[2]), ))
-v3 = a.instances['Middle_Plate'].vertices
-DVct=mdb.models['Model-1'].rootAssembly.instances['Middle_Plate'].datums[DP8].pointOn
-DVct2=mdb.models['Model-1'].rootAssembly.instances['Middle_Plate'].datums[DP5].pointOn
-verts3 = v3.findAt(((DVct[0], DVct[1],DVct[2]), ), ((DVct2[0], DVct2[1],DVct2[2]), ))
-v4 = a.instances['Right_Plate'].vertices
-DVct=mdb.models['Model-1'].rootAssembly.instances['Right_Plate'].datums[DP8].pointOn
-DVct2=mdb.models['Model-1'].rootAssembly.instances['Right_Plate'].datums[DP5].pointOn
-verts4 = v4.findAt(((DVct[0], DVct[1],DVct[2]), ), ((DVct2[0], DVct2[1],DVct2[2]), ))
-a = mdb.models['Model-1'].rootAssembly
-v6 = a.instances['Right_Plate_2'].vertices
-DVct=mdb.models['Model-1'].rootAssembly.instances['Right_Plate_2'].datums[DP8].pointOn
-DVct2=mdb.models['Model-1'].rootAssembly.instances['Right_Plate_2'].datums[DP5].pointOn
-verts6 = v6.findAt(((DVct[0], DVct[1],DVct[2]), ), ((DVct2[0], DVct2[1],DVct2[2]), ))
-a.Set(vertices=verts5+verts1+verts3+verts4+verts6, name='TIPNODE')
+Vol=mdb.models['Model-1'].parts['Elastomer'].getMassProperties()['volume']
+# v5 = a.instances['Left_Plate_2'].vertices
+# DVct=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP8].pointOn
+# DVct2=mdb.models['Model-1'].rootAssembly.instances['Left_Plate_2'].datums[DP5].pointOn
+# verts5 = v5.findAt(((DVct[0], DVct[1],DVct[2]), ), ((DVct2[0], DVct2[1],DVct2[2]), ))
+# v1 = a.instances['Left_Plate'].vertices
+# DVct=mdb.models['Model-1'].rootAssembly.instances['Left_Plate'].datums[DP8].pointOn
+# DVct2=mdb.models['Model-1'].rootAssembly.instances['Left_Plate'].datums[DP5].pointOn
+# verts1 = v1.findAt(((DVct[0], DVct[1],DVct[2]), ), ((DVct2[0], DVct2[1],DVct2[2]), ))
+# v3 = a.instances['Middle_Plate'].vertices
+# DVct=mdb.models['Model-1'].rootAssembly.instances['Middle_Plate'].datums[DP8].pointOn
+# DVct2=mdb.models['Model-1'].rootAssembly.instances['Middle_Plate'].datums[DP5].pointOn
+# verts3 = v3.findAt(((DVct[0], DVct[1],DVct[2]), ), ((DVct2[0], DVct2[1],DVct2[2]), ))
+# v4 = a.instances['Right_Plate'].vertices
+# DVct=mdb.models['Model-1'].rootAssembly.instances['Right_Plate'].datums[DP8].pointOn
+# DVct2=mdb.models['Model-1'].rootAssembly.instances['Right_Plate'].datums[DP5].pointOn
+# verts4 = v4.findAt(((DVct[0], DVct[1],DVct[2]), ), ((DVct2[0], DVct2[1],DVct2[2]), ))
+# a = mdb.models['Model-1'].rootAssembly
+# v6 = a.instances['Right_Plate_2'].vertices
+# DVct=mdb.models['Model-1'].rootAssembly.instances['Right_Plate_2'].datums[DP8].pointOn
+# DVct2=mdb.models['Model-1'].rootAssembly.instances['Right_Plate_2'].datums[DP5].pointOn
+# verts6 = v6.findAt(((DVct[0], DVct[1],DVct[2]), ), ((DVct2[0], DVct2[1],DVct2[2]), ))
+# a.Set(vertices=verts5+verts1+verts3+verts4+verts6, name='TIPNODE')
 
-a = mdb.models['Model-1'].rootAssembly
-e1 = a.instances['Elastomer'].edges
-DVct=mdb.models['Model-1'].rootAssembly.instances['Middle_Plate'].datums[DP8].pointOn
-edges1 = e1.findAt(((DVct[0], DVct[1], DVct[2]-elast_thk), ))
-a.Set(edges=edges1, name='TIPNODE')
+# a = mdb.models['Model-1'].rootAssembly
+# e1 = a.instances['Elastomer'].edges
+# DVct=mdb.models['Model-1'].rootAssembly.instances['Middle_Plate'].datums[DP8].pointOn
+# edges1 = e1.findAt(((DVct[0], DVct[1], DVct[2]-elast_thk), ))
+# a.Set(edges=edges1, name='TIPNODE')
 
 # x=np.linspace(-0.5,0.5,100)
 # DVct=mdb.models['Model-1'].rootAssembly.instances['Middle_Plate'].datums[DP8].pointOn
@@ -1588,53 +1766,24 @@ if os.access('%s.lck'%ModelName,os.F_OK):
 # Run the job, then process the results.
 if test==1:
 	stahp
-job.submit()
-job.waitForCompletion()
+try:
+	job.submit()
+	job.waitForCompletion()
+	[initial,final]=getResults2(ModelName)
+except:
+	initial=np.zeros((62,1))
+	final=np.zeros((62,1))
 print 'Completed job'
-tipDisp=[0 for x in range(21)]
-# if job.status==COMPLETED:
-	# tipDisp = getResults(ModelName)
-# else:
-	# tipDisp=[9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999]
-tipDisp = getResults(ModelName)
-[initial,final]=getResults2(ModelName)
-TT1_THE= find_strain(ModelName, 'RBM','THE',SetName = 'TT1_ELEM', object = 'assembly', object_name = None, strain_metric = 'principal')
-TT2_THE= find_strain(ModelName, 'RBM','THE',SetName = 'TT2_ELEM', object = 'assembly', object_name = None, strain_metric = 'principal')
-TT3_THE= find_strain(ModelName, 'RBM','THE',SetName = 'TT3_ELEM', object = 'assembly', object_name = None, strain_metric = 'principal')
-TT1_EE= find_strain(ModelName, 'RBM','EE',SetName = 'TT1_ELEM', object = 'assembly', object_name = None, strain_metric = 'Shear')
-TT2_EE= find_strain(ModelName, 'RBM','EE',SetName = 'TT2_ELEM', object = 'assembly', object_name = None, strain_metric = 'Shear')
-TT3_EE= find_strain(ModelName, 'RBM','EE',SetName = 'TT3_ELEM', object = 'assembly', object_name = None, strain_metric = 'Shear')
-ELAST_EE= find_strain(ModelName, 'RBM','EE',SetName = 'TT3_ELEM', object = 'assembly', object_name = None, strain_metric = 'principal')
-TT1_S=find_stress(ModelName,'TT1_ELEM')
-TT2_S=find_stress(ModelName,'TT2_ELEM')
-TT3_S=find_stress(ModelName,'TT3_ELEM')
-ELAST_S=find_stress(ModelName,'ELAST_ELEM')
 
-A=(final[2],final[12],final[3],final[13],final[0],final[10],final[1],final[11],final[8],final[18],final[9],final[19],final[6],final[16],final[7],final[17],final[4],final[14],final[5],final[15])
-x=[0 for ind in range(12)]
-x[0]=-0.5*Total
-x[1:11]=A[0:19:2]
-x[11]=0.5*Total
-z=[0 for ind in range(12)]
-z[0]=initial[12]
-z[1:10]=A[1:20:2]
-z[11]=initial[15]
 fileobject = open('temp.txt','wb')
-for xloc in x:
+for xloc in initial:
 	fileobject.write('%.4f\n' % xloc)
-for zloc in z:
+for zloc in final:
 	fileobject.write('%.4f\n' % zloc)
+for zloc in range(len(Desireloc)):
+	fileobject.write('%.4f\n' % Desireloc[zloc,4])
+for zloc in range(len(Desireloc)):
+	fileobject.write('%.4f\n' % -Desireloc[zloc,5])	
+fileobject.write('%.10f\n' % Vol)	
 fileobject.close()
-	
-DataFile = open('PostData.txt','a')
-DataFile.write('%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f\n' % (IRTT,ORTT,T1,T2,T3,G,HNG,
-phiL2,phiR2,tipDisp[2],tipDisp[12],tipDisp[3],tipDisp[13],tipDisp[0],tipDisp[10],tipDisp[1],tipDisp[11],tipDisp[8],tipDisp[18],tipDisp[9],tipDisp[19],tipDisp[6],tipDisp[16],tipDisp[7],tipDisp[17],
-tipDisp[4],tipDisp[14],tipDisp[5],tipDisp[15],tipDisp[20],TT1_THE,TT2_THE,TT3_THE,TT1_EE,TT2_EE,TT3_EE,ELAST_EE,TT1_S,TT2_S,TT3_S,ELAST_S, ))
-DataFile.close()
-DataFile = open('PostDataInitial.txt','a')
-DataFile.write('%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f\n' % (IRTT,ORTT,T1,T2,T3,G,HNG,phiL2,phiR2,initial[2],initial[12],initial[3],initial[13],initial[0],initial[10],initial[1],initial[11],initial[8],initial[18],initial[9],initial[19],initial[6],initial[16],initial[7],initial[17],initial[4],initial[14],initial[5],initial[15],tipDisp[20],TT1_THE,TT2_THE,TT3_THE,TT1_EE,TT2_EE,TT3_EE,ELAST_EE,TT1_S,TT2_S,TT3_S,ELAST_S, ))
-DataFile.close()
-DataFile = open('PostDataFinal.txt','a')
-DataFile.write('%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,%10f,' % (IRTT,ORTT,T1,T2,T3,G,HNG,phiL2,phiR2,final[2],final[12],final[3],final[13],final[0],final[10],final[1],final[11],final[8],final[18],final[9],final[19],final[6],final[16],final[7],final[17],final[4],final[14],final[5],final[15],tipDisp[20],TT1_THE,TT2_THE,TT3_THE,TT1_EE,TT2_EE,TT3_EE,ELAST_EE,TT1_S,TT2_S,TT3_S,ELAST_S, ))
-DataFile.close()
-print 'DONE!!'
+

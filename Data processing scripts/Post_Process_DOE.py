@@ -7,12 +7,10 @@ from scipy import stats
 
 Panels=5                                #W 3,4 or 5 Panel cases
 DOE='Act'                               #'Full' or 'Act' 
-#with open('%iPanel_%sDOE_FinalCoord.csv' % (Panels,DOE), 'r') as f:
-with open('PostDataFinal.csv', 'r') as f: 
+with open('%iPanel_%sDOE_FinalCoord.csv' % (Panels,DOE), 'r') as f:
     next(f)
     Data = [[float(num) for num in line.split(',')] for line in f]
-#with open('%iPanel_%sDOE_InitialCoord.csv' % (Panels,DOE), 'r') as f:
-with open('PostDataInitial.csv', 'r') as f: 
+with open('%iPanel_%sDOE_InitialCoord.csv' % (Panels,DOE), 'r') as f:
     next(f)
     Initial = [[float(num) for num in line.split(',')] for line in f]
 Total=1.000
@@ -106,6 +104,7 @@ for i in range(len(sorted_Data)):
     Change_H[i,4]=Change_P[i,3]-Change_P[i,4]
     Change_H[i,5]=atan2((sorted_Initial[i,28]-sorted_Initial[i,26]),(sorted_Initial[i,27]-sorted_Initial[i,25])) - atan2((sorted_Data[i,28]-sorted_Data[i,26]),(sorted_Data[i,27]-sorted_Data[i,25]))
 
+# Calculate correlation co-efficients for change in hinge angles#
 hinge_num=2
 corr1, _ = stats.spearmanr(sorted_Data[:,0], Change_P[:,hinge_num])
 corr2, _ = stats.spearmanr(sorted_Data[:,1], Change_P[:,hinge_num])
@@ -116,6 +115,7 @@ corr6, _ = stats.spearmanr(sorted_Data[:,5], Change_P[:,hinge_num])
 corr7, _ = stats.spearmanr(sorted_Data[:,6], Change_P[:,hinge_num])
 corr8, _ = stats.spearmanr(sorted_Data[:,7], Change_P[:,hinge_num])
 corr9, _ = stats.spearmanr(sorted_Data[:,8], Change_P[:,hinge_num])
+# Calculate correlation co-efficients for change in plate angles#
 hinge_num=0
 corr1, _ = stats.spearmanr(sorted_Data[:,0], Change_H[:,hinge_num])
 corr2, _ = stats.spearmanr(sorted_Data[:,1], Change_H[:,hinge_num])
@@ -126,11 +126,6 @@ corr6, _ = stats.spearmanr(sorted_Data[:,5], Change_H[:,hinge_num])
 corr7, _ = stats.spearmanr(sorted_Data[:,6], Change_H[:,hinge_num])
 corr8, _ = stats.spearmanr(sorted_Data[:,7], Change_H[:,hinge_num])
 corr9, _ = stats.spearmanr(sorted_Data[:,8], Change_H[:,hinge_num])
-
-#max_disp=[0.00 for num in range(len(Data))]
-#for i in range(len(Data)):
-#    max_disp[i]=max(sorted_Initial[i,10:29:2]-sorted_Data[i,10:29:2])
-#corr1, _ = stats.spearmanr(sorted_Data[:,0], max_disp[:])
 
 plt.figure(1)
 plt.scatter(sorted_Data[:,2]*0.1,Change_H[:,1],label='Shear strain at Tube 1')
