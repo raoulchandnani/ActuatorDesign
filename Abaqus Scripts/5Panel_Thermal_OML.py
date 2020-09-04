@@ -600,7 +600,7 @@ for xloc in range(start,end):
 		p.projectReferencesOntoSketch(sketch=s, filter=COPLANAR_EDGES)
 	XLOC=11.85+0.0315*xloc
 	count=0
-	Dataxloc=[[0.000000 for x in range(3)] for y in range(len(Datalow))]
+	Dataxloc=[[0.000000 for x in range(7)] for y in range(len(Datalow))]
 	Dataxloc=np.array(Dataxloc)
 	for i in range(len(Datalow)):
 		if abs(Datalow[i,0]-XLOC)<1E-06:
