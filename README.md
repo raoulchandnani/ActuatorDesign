@@ -16,6 +16,8 @@ Code to generate and run model for a 5-panel hinged structure with conformal sur
 
 *TorqueTube* -  Runs abaqus model of SMA torque tube analysis
 
+*5Panel_SMA_OML_120221* - Runs abaqus model of multiple device 5 panel hinged assembly using SMA actuation with conformal surface as an input
+
 **Data processing scripts**
 
 Code to post-process data 
